@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>黄金ドングリを集め出せ！</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background-color: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            max-width: 420px;
+            height: 100vh;
+            max-height: 750px;
+            background: #2d3725;
+            box-shadow: 0 0 25px rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        /* スコアヘッダー */
+        #top-bar {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            height: 48px;
+            background: rgba(0, 0, 0, 0.75);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 10;
+        }
+        .score-text {
+            color: #ffd700;
+            font-size: 18px;
+        }
+
+        /* ゲーム画面 */
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* 操作ボタン */
+        #controls {
+            position: absolute;
+            bottom: 15px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            z-index: 10;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px 0;
+            background: linear-gradient(180deg, #8b5a2b, #5c3a17);
+            border: 2px solid #ffd700;
+            border-radius: 25px;
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .btn:active {
+            transform: translateY(2px);
+            background: linear-gradient(180deg, #5c3a17, #3a240e);
+        }
+
+        /* 結果発表画面（オーバーレイ） */
+        #result-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 50px 20px 40px;
+            z-index: 20;
+        }
+        .result-board {
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid #ffd700;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            text-align: center;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+        .result-title {
+            font-size: 26px;
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000000;
+        }
+        .result-stat {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .rank-badge {
+            font-size: 48px;
+            color: #ff4444;
+            font-weight: bold;
+            margin-top: 5px;
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.6);
+        }
+        #restart-btn {
+            width: 85%;
+            padding: 16px;
+            background: linear-gradient(180deg, #ffcc00, #ff8800);
+            border: 3px solid #ffffff;
+            border-radius: 30px;
+            color: #000000;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- UIバー -->
+    <div id="top-bar">
+        <div>黄金ドングリ: <span id="score" class="score-text">0</span> 個</div>
+        <div>最高記録: <span id="high-score">0</span> 個</div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 操作ボタン -->
+    <div id="controls">
+        <div class="btn" id="btn-left">◀ 左</div>
+        <div class="btn" id="btn-jump">▲ ジャンプ</div>
+        <div class="btn" id="btn-right">右 ▶</div>
+    </div>
+
+    <!-- 結果発表画面 -->
+    <div id="result-screen">
+        <div class="result-board">
+            <div class="result-title">【 結 果 発 表 】</div>
+            <div class="result-stat">押収された黄金ドングリ<br><span id="res-score" class="score-text">0</span> 個</div>
+            <div class="result-stat" style="margin-top:15px;">評価ランク</div>
+            <div id="res-rank" class="rank-badge">S</div>
+            <p style="font-size: 12px; margin-top: 12px; color: #aaaaaa;">罪状：どんぐり乱獲占有罪</p>
+        </div>
+        <button id="restart-btn" onclick="resetGame()">もう一度走る！</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = 400;
+    canvas.height = 700;
+
+    // === 生成された画像のファイル名をそのまま設定 ===
+    const IMAGES = {
+        player: 'watermarked_img_11826650554942844772.png',   // おばあちゃん＆ウリボ（切り抜き・後ろ姿）
+        resultBg: 'watermarked_img_820727725860025810.png'    // 結果発表用背景
+    };
+
+    const playerImg = new Image();
+    playerImg.src = IMAGES.player;
+
+    const resultBgImg = new Image();
+    resultBgImg.src = IMAGES.resultBg;
+
+    // ゲーム変数
+    let score = 0;
+    let highScore = localStorage.getItem('acorn_highscore') || 0;
+    document.getElementById('high-score').textContent = highScore;
+    let isGameOver = false;
+
+    // 3レーン設定
+    const lanes = [100, 200, 300];
+    let currentLane = 1;
+    let targetX = lanes[currentLane];
+    let playerX = targetX;
+    let playerY = 540;
+
+    // ジャンプ処理
+    let isJumping = false;
+    let jumpOffsetY = 0;
+    let jumpVelocity = 0;
+    const gravity = 0.85;
+
+    // スポーンオブジェクト
+    let objects = [];
+    let speed = 7;
+    let spawnTimer = 0;
+    let bgOffset = 0;
+
+    // 操作設定
+    document.getElementById('btn-left').addEventListener('click', () => moveLane(-1));
+    document.getElementById('btn-right').addEventListener('click', () => moveLane(1));
+    document.getElementById('btn-jump').addEventListener('click', jump);
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') moveLane(-1);
+        if (e.key === 'ArrowRight') moveLane(1);
+        if (e.key === 'ArrowUp' || e.key === ' ') jump();
+    });
+
+    function moveLane(dir) {
+        if (isGameOver) return;
+        currentLane = Math.max(0, Math.min(2, currentLane + dir));
+        targetX = lanes[currentLane];
+    }
+
+    function jump() {
+        if (!isJumping && !isGameOver) {
+            isJumping = true;
+            jumpVelocity = -15;
+        }
+    }
+
+    // アイテム・障害物の生成
+    function spawnObject() {
+        const lane = Math.floor(Math.random() * 3);
+        const isObstacle = Math.random() < 0.35; // 35%の確率で障害物
+        objects.push({
+            x: lanes[lane],
+            y: -50,
+            type: isObstacle ? 'rock' : 'acorn'
+        });
+    }
+
+    // ゲーム計算
+    function update() {
+        if (isGameOver) return;
+
+        playerX += (targetX - playerX) * 0.25;
+
+        if (isJumping) {
+            jumpOffsetY += jumpVelocity;
+            jumpVelocity += gravity;
+            if (jumpOffsetY >= 0) {
+                jumpOffsetY = 0;
+                isJumping = false;
+            }
+        }
+
+        bgOffset = (bgOffset + speed) % 40;
+
+        spawnTimer++;
+        if (spawnTimer > 32) {
+            spawnObject();
+            spawnTimer = 0;
+            speed += 0.004;
+        }
+
+        for (let i = objects.length - 1; i >= 0; i--) {
+            let obj = objects[i];
+            obj.y += speed;
+
+            let dx = Math.abs(playerX - obj.x);
+            let dy = Math.abs((playerY + jumpOffsetY) - obj.y);
+
+            if (dx < 32 && dy < 38) {
+                if (obj.type === 'acorn') {
+                    score += 10;
+                    document.getElementById('score').textContent = score;
+                    objects.splice(i, 1);
+                    continue;
+                } else if (obj.type === 'rock') {
+                    if (jumpOffsetY > -25) {
+                        endGame();
+                        return;
+                    }
+                }
+            }
+
+            if (obj.y > canvas.height + 50) {
+                objects.splice(i, 1);
+            }
+        }
+    }
+
+    // 描画
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 背景
+        ctx.fillStyle = '#2d3725';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#5a4332';
+        ctx.fillRect(50, 0, 300, canvas.height);
+
+        ctx.strokeStyle = '#8d7052';
+        ctx.setLineDash([20, 20]);
+        ctx.lineDashOffset = -bgOffset;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(150, 0); ctx.lineTo(150, canvas.height);
+        ctx.moveTo(250, 0); ctx.lineTo(250, canvas.height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // オブジェクト
+        objects.forEach(obj => {
+            if (obj.type === 'acorn') {
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.arc(obj.x, obj.y, 14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#fff';
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = '#6c7a89';
+                ctx.beginPath();
+                ctx.arc(obj.x, obj.y, 22, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#34495e';
+                ctx.fillRect(obj.x - 16, obj.y - 6, 32, 12);
+            }
+        });
+
+        // プレイヤー
+        const drawY = playerY + jumpOffsetY;
+
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(playerX, playerY + 40, 28, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (playerImg.complete && playerImg.naturalWidth !== 0) {
+            const w = 130;
+            const h = 160;
+            ctx.drawImage(playerImg, playerX - w/2, drawY - h/2, w, h);
+        } else {
+            ctx.fillStyle = '#d35400';
+            ctx.beginPath();
+            ctx.arc(playerX, drawY, 26, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        if (!isGameOver) {
+            requestAnimationFrame(gameLoop);
+        }
+    }
+
+    function endGame() {
+        isGameOver = true;
+
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('acorn_highscore', highScore);
+            document.getElementById('high-score').textContent = highScore;
+        }
+
+        let rank = 'C';
+        if (score >= 300) rank = 'S';
+        else if (score >= 200) rank = 'A';
+        else if (score >= 100) rank = 'B';
+
+        document.getElementById('res-score').textContent = score;
+        document.getElementById('res-rank').textContent = rank;
+
+        const resultScreen = document.getElementById('result-screen');
+        resultScreen.style.backgroundImage = `url('${IMAGES.resultBg}')`;
+        resultScreen.style.display = 'flex';
+    }
+
+    function resetGame() {
+        score = 0;
+        speed = 7;
+        currentLane = 1;
+        targetX = lanes[1];
+        playerX = targetX;
+        objects = [];
+        isGameOver = false;
+        document.getElementById('score').textContent = 0;
+        document.getElementById('result-screen').style.display = 'none';
+        gameLoop();
+    }
+
+    gameLoop();
+</script>
+</body>
+</html>
