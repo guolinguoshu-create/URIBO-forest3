@@ -81,6 +81,7 @@
             color: #ffffff;
             margin-bottom: auto;
             margin-top: 60px;
+            display: none; /* 背景画像に文字があるので隠します */
         }
         #start-header-card h1 { font-size: 22px; color: #ffd700; margin-bottom: 6px; }
         
@@ -220,12 +221,12 @@
 
 <script>
     // ==========================================
-    // 🖼️ 画像自動設定システム (背景透過機能つき)
+    // 🖼️ 画像自動設定システム (画像の割り当てを修正)
     // ==========================================
     const IMAGE_CANDIDATES = [
-        '1788793217973.png', // トップ画像（前回と入れ替えました！）
-        '1788702691552.png', // おばあちゃん（前回と入れ替えました！）
-        '1788793264451.png', // 結果発表
+        '1788793264451.png', // 逮捕されたおばあちゃん (結果発表画面用)
+        '1788702691552.png', // タイトルロゴ入りおばあちゃん (トップ画面＆キャラ用)
+        '1788793217973.png', // 予備
         'image.png',         // ドングリ
         'title.png', 'player.png', 'result.png', 'acorn.png'
     ];
@@ -238,7 +239,7 @@
         let loadedCount = 0;
         IMAGE_CANDIDATES.forEach(filename => {
             const img = new Image();
-            img.crossOrigin = "Anonymous"; // 透過処理のために必要
+            img.crossOrigin = "Anonymous";
             img.onload = () => { loadedImages[filename] = img; checkDone(); };
             img.onerror = () => { checkDone(); };
             img.src = filename;
@@ -251,27 +252,25 @@
     }
 
     function applyLoadedImages() {
-        // トップ画像 (ファイル名を入れ替え)
-        const titleImg = loadedImages['title.png'] || loadedImages['1788793217973.png'];
-        if (titleImg) {
-            document.getElementById('start-screen').style.backgroundImage = `url('${titleImg.src}')`;
-            document.getElementById('start-header-card').style.display = 'none';
+        // トップ画像: キャラクター画像 (タイトルロゴ入り)
+        const startImg = loadedImages['1788702691552.png'] || loadedImages['title.png'];
+        if (startImg) {
+            document.getElementById('start-screen').style.backgroundImage = `url('${startImg.src}')`;
         }
         
-        // おばあちゃん (ファイル名を入れ替え)
-        playerImgObj = loadedImages['player.png'] || loadedImages['1788702691552.png'];
+        // プレイヤー画像: キャラクター画像
+        playerImgObj = loadedImages['1788702691552.png'] || loadedImages['player.png'];
         
-        // 結果画面
-        const resultImg = loadedImages['result.png'] || loadedImages['1788793264451.png'];
+        // 結果画面背景: 逮捕されたおばあちゃん画像
+        const resultImg = loadedImages['1788793264451.png'] || loadedImages['result.png'];
         if (resultImg) {
             document.getElementById('result-screen').style.backgroundImage = `url('${resultImg.src}')`;
         }
         
-        // 黄金ドングリ ＆ 背景自動透過処理！
-        const rawAcorn = loadedImages['acorn.png'] || loadedImages['image.png'];
+        // 黄金ドングリ ＆ 透過処理
+        const rawAcorn = loadedImages['image.png'] || loadedImages['acorn.png'];
         if (rawAcorn && rawAcorn.complete && rawAcorn.naturalWidth !== 0) {
             try {
-                // 画像を仮想キャンバスに描画して、白っぽい色を透明に変換する
                 const tCanvas = document.createElement('canvas');
                 tCanvas.width = rawAcorn.naturalWidth;
                 tCanvas.height = rawAcorn.naturalHeight;
@@ -284,19 +283,22 @@
                     const r = data[i];
                     const g = data[i+1];
                     const b = data[i+2];
-                    // 白っぽい背景 (R,G,Bがすべて230以上) なら透明にする
-                    if(r > 230 && g > 230 && b > 230) {
-                        data[i+3] = 0; // 透明度(Alpha)を0に
-                    }
-                    // ついでに真っ黒背景の場合も透明にする
-                    if(r < 20 && g < 20 && b < 20) {
+                    
+                    const max = Math.max(r, g, b);
+                    const min = Math.min(r, g, b);
+                    const diff = max - min;
+
+                    // 白っぽい、グレーっぽい、黒っぽい部分は透過
+                    if ( (r > 200 && g > 200 && b > 200) || 
+                         (r < 50 && g < 50 && b < 50) ||   
+                         (diff < 20 && max > 150)          
+                       ) {
                         data[i+3] = 0;
                     }
                 }
                 tCtx.putImageData(imgData, 0, 0);
-                acornImgObj = tCanvas; // 透過済みのキャンバスをセット
+                acornImgObj = tCanvas;
             } catch(e) {
-                // セキュリティエラー等で透過できない場合はそのまま使う
                 acornImgObj = rawAcorn;
             }
         }
@@ -305,7 +307,7 @@
     initImages();
 
     // ==========================================
-    // 🎵 フリーズ対策済み サウンドシステム
+    // 🎵 サウンドシステム
     // ==========================================
     class SoundManager {
         constructor() { this.ctx = null; this.muted = false; }
@@ -440,7 +442,6 @@
         objects.forEach(obj => {
             if (obj.type === 'acorn') {
                 if (acornImgObj) {
-                    // 透過処理済みのドングリを描画
                     ctx.drawImage(acornImgObj, obj.x - 24, obj.y - 24, 48, 48);
                 } else {
                     ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(obj.x, obj.y, 14, 0, Math.PI * 2); ctx.fill();
@@ -493,3 +494,4 @@
 </script>
 </body>
 </html>
+
