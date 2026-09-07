@@ -66,7 +66,7 @@
             background-color: #1b2618;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* 画像を見せるためボタンを下に配置 */
+            justify-content: flex-end;
             align-items: center;
             padding-bottom: 70px;
             z-index: 30;
@@ -220,14 +220,14 @@
 
 <script>
     // ==========================================
-    // 🖼️ 画像自動設定システム (最新の1788～に対応)
+    // 🖼️ 画像自動設定システム (背景透過機能つき)
     // ==========================================
     const IMAGE_CANDIDATES = [
-        '1788702691552.png', // トップ画像
-        '1788793217973.png', // おばあちゃん
+        '1788793217973.png', // トップ画像（前回と入れ替えました！）
+        '1788702691552.png', // おばあちゃん（前回と入れ替えました！）
         '1788793264451.png', // 結果発表
         'image.png',         // ドングリ
-        'title.png', 'player.png', 'result.png', 'acorn.png' // もし名前を変えた時用
+        'title.png', 'player.png', 'result.png', 'acorn.png'
     ];
 
     const loadedImages = {};
@@ -238,6 +238,7 @@
         let loadedCount = 0;
         IMAGE_CANDIDATES.forEach(filename => {
             const img = new Image();
+            img.crossOrigin = "Anonymous"; // 透過処理のために必要
             img.onload = () => { loadedImages[filename] = img; checkDone(); };
             img.onerror = () => { checkDone(); };
             img.src = filename;
@@ -250,21 +251,55 @@
     }
 
     function applyLoadedImages() {
-        // トップ画像
-        const titleImg = loadedImages['title.png'] || loadedImages['1788702691552.png'];
+        // トップ画像 (ファイル名を入れ替え)
+        const titleImg = loadedImages['title.png'] || loadedImages['1788793217973.png'];
         if (titleImg) {
             document.getElementById('start-screen').style.backgroundImage = `url('${titleImg.src}')`;
-            document.getElementById('start-header-card').style.display = 'none'; // 画像に文字があるのでHTML枠を消す
+            document.getElementById('start-header-card').style.display = 'none';
         }
-        // おばあちゃん
-        playerImgObj = loadedImages['player.png'] || loadedImages['1788793217973.png'];
+        
+        // おばあちゃん (ファイル名を入れ替え)
+        playerImgObj = loadedImages['player.png'] || loadedImages['1788702691552.png'];
+        
         // 結果画面
         const resultImg = loadedImages['result.png'] || loadedImages['1788793264451.png'];
         if (resultImg) {
             document.getElementById('result-screen').style.backgroundImage = `url('${resultImg.src}')`;
         }
-        // 黄金ドングリ
-        acornImgObj = loadedImages['acorn.png'] || loadedImages['image.png'];
+        
+        // 黄金ドングリ ＆ 背景自動透過処理！
+        const rawAcorn = loadedImages['acorn.png'] || loadedImages['image.png'];
+        if (rawAcorn && rawAcorn.complete && rawAcorn.naturalWidth !== 0) {
+            try {
+                // 画像を仮想キャンバスに描画して、白っぽい色を透明に変換する
+                const tCanvas = document.createElement('canvas');
+                tCanvas.width = rawAcorn.naturalWidth;
+                tCanvas.height = rawAcorn.naturalHeight;
+                const tCtx = tCanvas.getContext('2d');
+                tCtx.drawImage(rawAcorn, 0, 0);
+                const imgData = tCtx.getImageData(0, 0, tCanvas.width, tCanvas.height);
+                const data = imgData.data;
+                
+                for(let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i+1];
+                    const b = data[i+2];
+                    // 白っぽい背景 (R,G,Bがすべて230以上) なら透明にする
+                    if(r > 230 && g > 230 && b > 230) {
+                        data[i+3] = 0; // 透明度(Alpha)を0に
+                    }
+                    // ついでに真っ黒背景の場合も透明にする
+                    if(r < 20 && g < 20 && b < 20) {
+                        data[i+3] = 0;
+                    }
+                }
+                tCtx.putImageData(imgData, 0, 0);
+                acornImgObj = tCanvas; // 透過済みのキャンバスをセット
+            } catch(e) {
+                // セキュリティエラー等で透過できない場合はそのまま使う
+                acornImgObj = rawAcorn;
+            }
+        }
     }
 
     initImages();
@@ -305,7 +340,7 @@
     }
 
     // ==========================================
-    // 🎮 ゲームシステム (フリーズ防止策強化)
+    // 🎮 ゲームシステム
     // ==========================================
     function setGameState(state) {
         const s = document.getElementById('start-screen');
@@ -313,7 +348,7 @@
         const c = document.getElementById('controls');
         if (state === 'START') { s.style.display = 'flex'; r.style.display = 'none'; c.style.display = 'none'; }
         else if (state === 'PLAYING') { s.style.display = 'none'; r.style.display = 'none'; c.style.display = 'flex'; }
-        else if (state === 'RESULT') { s.style.display = 'none'; r.style.display = 'flex'; c.style.display = 'none'; } // 操作ボタンは隠す！
+        else if (state === 'RESULT') { s.style.display = 'none'; r.style.display = 'flex'; c.style.display = 'none'; }
     }
 
     const canvas = document.getElementById('gameCanvas');
@@ -322,7 +357,6 @@
 
     let score = 0;
     let highScore = 0;
-    // localStorageエラーでゲームがフリーズするのを防止
     try { highScore = localStorage.getItem('acorn_highscore') || 0; } catch(e) {}
     document.getElementById('high-score').textContent = highScore;
 
@@ -350,7 +384,7 @@
     }
 
     function startGame() {
-        try { sound.init(); } catch(e) {} // 音声エラーで止まらないようにする
+        try { sound.init(); } catch(e) {}
         isPlaying = true; isGameOver = false;
         setGameState('PLAYING');
         gameLoop();
@@ -402,11 +436,12 @@
         ctx.moveTo(150, 0); ctx.lineTo(150, canvas.height);
         ctx.moveTo(250, 0); ctx.lineTo(250, canvas.height); ctx.stroke(); ctx.setLineDash([]);
 
-        // オブジェクト（黄金ドングリ画像適用）
+        // オブジェクト
         objects.forEach(obj => {
             if (obj.type === 'acorn') {
-                if (acornImgObj && acornImgObj.complete && acornImgObj.naturalWidth !== 0) {
-                    ctx.drawImage(acornImgObj, obj.x - 22, obj.y - 24, 44, 44);
+                if (acornImgObj) {
+                    // 透過処理済みのドングリを描画
+                    ctx.drawImage(acornImgObj, obj.x - 24, obj.y - 24, 48, 48);
                 } else {
                     ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(obj.x, obj.y, 14, 0, Math.PI * 2); ctx.fill();
                 }
