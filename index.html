@@ -136,13 +136,13 @@
             background-color: rgba(0, 0, 0, 0.9);
             display: none;
             flex-direction: column;
-            justify-content: flex-start; /* 上寄せに変更 */
-            padding-top: 15%; /* 少しだけ下げる */
+            justify-content: flex-start;
+            padding-top: 15%;
             align-items: center;
             z-index: 30;
         }
         .result-board {
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(4px);
             border: 3px solid #ffd700;
             border-radius: 18px;
@@ -150,16 +150,22 @@
             width: 90%;
             text-align: center;
             color: #ffffff;
-            margin-bottom: 25px;
         }
         .result-title { font-size: 24px; color: #ffd700; margin-bottom: 12px; font-weight: bold; }
         .rank-badge { font-size: 48px; color: #ff4444; font-weight: bold; margin: 4px 0; }
+        
+        /* ボタンを最下部に固定 */
         #restart-btn {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
             width: 85%; padding: 16px;
             background: linear-gradient(180deg, #ffea00, #ff8800);
             border: 3px solid #ffffff; border-radius: 30px;
             color: #000; font-size: 20px; font-weight: bold;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 40;
         }
     </style>
 </head>
@@ -208,10 +214,10 @@
     // 🖼️ 画像処理＆透過システム
     // ==========================================
     const IMAGE_CANDIDATES = [
-        '1788702691552.png', // トップ画面 (タイトルロゴ入り)
-        '1788793264451.png', // プレイヤーキャラ
-        '1788793217973.png', // 逮捕されたおばあちゃん (結果発表)
-        'image.png',         // ドングリ
+        '1788702691552.png',
+        '1788793264451.png',
+        '1788793217973.png',
+        'image.png',
         'title.png', 'player.png', 'result.png', 'acorn.png'
     ];
 
@@ -235,8 +241,9 @@
                 const max = Math.max(r, g, b), min = Math.min(r, g, b), diff = max - min;
 
                 if (isPlayer) {
-                    // キャラクターの白い背景を透過する処理
-                    if (r > 240 && g > 240 && b > 240) {
+                    // キャラクターの白い背景および「市松模様（明るいグレー）」を透過する処理
+                    const isMonochrome = Math.abs(r - g) < 20 && Math.abs(g - b) < 20;
+                    if (isMonochrome && r > 150) {
                         data[i+3] = 0; // 透明度を0にする
                     }
                 } else {
@@ -270,21 +277,17 @@
     }
 
     function applyLoadedImages() {
-        // トップ画像
         const startImg = loadedImages['1788702691552.png'] || loadedImages['title.png'];
         if (startImg) document.getElementById('start-screen').style.backgroundImage = `url('${startImg.src}')`;
         
-        // 結果画面背景
         const resultImg = loadedImages['1788793217973.png'] || loadedImages['result.png'];
         if (resultImg) document.getElementById('result-screen').style.backgroundImage = `url('${resultImg.src}')`;
 
-        // プレイヤー画像（透過処理を適用！）
         const rawPlayer = loadedImages['1788793264451.png'] || loadedImages['player.png'];
         if (rawPlayer && rawPlayer.complete && rawPlayer.naturalWidth !== 0) {
             playerImgObj = makeTransparent(rawPlayer, true);
         }
 
-        // ドングリ画像（透過処理を適用）
         const rawAcorn = loadedImages['image.png'] || loadedImages['acorn.png'];
         if (rawAcorn && rawAcorn.complete && rawAcorn.naturalWidth !== 0) {
             acornImgObj = makeTransparent(rawAcorn, false);
@@ -430,33 +433,30 @@
             if (obj.type === 'acorn') {
                 if (acornImgObj && acornImgObj.width) {
                     const aspect = acornImgObj.width / acornImgObj.height;
-                    // ドングリのサイズを大きくしました！ (40 -> 60)
-                    let drawW = 60;
-                    let drawH = 60 / aspect;
+                    // ドングリのサイズをさらに大きく！ (60 -> 75)
+                    let drawW = 75;
+                    let drawH = 75 / aspect;
                     if (aspect < 0.8) {
-                        drawH = 65;
-                        drawW = 65 * aspect;
+                        drawH = 80;
+                        drawW = 80 * aspect;
                     }
                     ctx.drawImage(acornImgObj, obj.x - drawW/2, obj.y - drawH/2, drawW, drawH);
                 } else {
-                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(obj.x, obj.y, 20, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(obj.x, obj.y, 25, 0, Math.PI * 2); ctx.fill();
                 }
             } else {
-                // 障害物を木の丸太風に変更！
-                ctx.fillStyle = '#5c4033'; // 濃い茶色
+                // 障害物を視認性の高い岩ブロックに変更
+                ctx.fillStyle = '#7f8c8d';
                 ctx.beginPath();
-                ctx.arc(obj.x - 20, obj.y, 14, Math.PI/2, Math.PI*1.5);
-                ctx.arc(obj.x + 20, obj.y, 14, Math.PI*1.5, Math.PI/2);
-                ctx.closePath();
+                ctx.arc(obj.x, obj.y, 22, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // 木目（ハイライト）
-                ctx.strokeStyle = '#3e2723';
+                // ブロックの模様
+                ctx.fillStyle = '#2c3e50';
+                ctx.fillRect(obj.x - 16, obj.y - 6, 32, 12);
+                ctx.strokeStyle = '#ecf0f1';
                 ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(obj.x - 15, obj.y - 5); ctx.lineTo(obj.x + 15, obj.y - 5);
-                ctx.moveTo(obj.x - 20, obj.y + 5); ctx.lineTo(obj.x + 20, obj.y + 5);
-                ctx.stroke();
+                ctx.strokeRect(obj.x - 16, obj.y - 6, 32, 12);
             }
         });
 
