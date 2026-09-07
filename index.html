@@ -37,7 +37,6 @@
             border-radius: 12px;
         }
 
-        /* サウンド切替ボタン */
         #sound-btn {
             position: absolute;
             top: 12px;
@@ -57,7 +56,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
 
-        /* トップ（スタート）画面 */
+        /* ① トップ画面 */
         #start-screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -67,12 +66,12 @@
             background-color: #1b2618;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-end; /* 画像を見せるためボタンを下に配置 */
             align-items: center;
-            padding: 60px 20px 50px;
+            padding-bottom: 70px;
             z-index: 30;
         }
-        .start-header-card {
+        #start-header-card {
             background: rgba(0, 0, 0, 0.82);
             border: 3px solid #ffd700;
             border-radius: 16px;
@@ -80,19 +79,11 @@
             width: 90%;
             text-align: center;
             color: #ffffff;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            margin-bottom: auto;
+            margin-top: 60px;
         }
-        .start-header-card h1 {
-            font-size: 22px;
-            color: #ffd700;
-            text-shadow: 2px 2px 4px #000;
-            margin-bottom: 6px;
-        }
-        .start-header-card p {
-            font-size: 13px;
-            color: #dddddd;
-        }
-
+        #start-header-card h1 { font-size: 22px; color: #ffd700; margin-bottom: 6px; }
+        
         #start-btn {
             width: 85%;
             padding: 18px;
@@ -107,19 +98,12 @@
             animation: pulse 1.5s infinite;
             touch-action: manipulation;
         }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.04); }
-            100% { transform: scale(1); }
-        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
 
-        /* スコアヘッダー */
+        /* スコアバー */
         #top-bar {
             position: absolute;
-            top: 12px;
-            left: 12px;
-            right: 64px;
-            height: 42px;
+            top: 12px; left: 12px; right: 64px; height: 42px;
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid #ffd700;
             border-radius: 10px;
@@ -128,46 +112,33 @@
             align-items: center;
             padding: 0 14px;
             color: #ffffff;
-            font-weight: bold;
             font-size: 13px;
+            font-weight: bold;
             z-index: 10;
         }
         .score-text { color: #ffd700; font-size: 16px; }
 
-        /* キャンバス */
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* 操作ボタン (初期は非表示) */
+        /* 操作ボタン */
         #controls {
             position: absolute;
-            bottom: 20px;
-            left: 12px;
-            right: 12px;
+            bottom: 20px; left: 12px; right: 12px;
             display: none;
             justify-content: space-between;
             gap: 10px;
             z-index: 20;
         }
         .btn {
-            flex: 1;
-            padding: 16px 0;
+            flex: 1; padding: 16px 0;
             background: linear-gradient(180deg, #9a6332, #5c3a17);
             border: 2px solid #ffd700;
             border-radius: 25px;
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 16px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-        .btn:active {
-            transform: translateY(2px);
-            background: linear-gradient(180deg, #5c3a17, #3a240e);
+            color: #ffffff; font-weight: bold; font-size: 16px;
+            text-align: center; cursor: pointer; touch-action: manipulation;
         }
 
-        /* 結果発表画面 */
+        /* ③ 結果発表画面 */
         #result-screen {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -177,47 +148,29 @@
             background-color: rgba(0, 0, 0, 0.85);
             display: none;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            padding: 65px 20px 40px;
+            padding: 20px;
             z-index: 30;
         }
         .result-board {
-            background: rgba(0, 0, 0, 0.88);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
             border: 3px solid #ffd700;
             border-radius: 18px;
             padding: 22px 16px;
             width: 90%;
             text-align: center;
             color: #ffffff;
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            margin-bottom: 30px;
         }
-        .result-title {
-            font-size: 24px;
-            color: #ffd700;
-            margin-bottom: 12px;
-            font-weight: bold;
-            text-shadow: 1px 1px 3px #000;
-        }
-        .rank-badge {
-            font-size: 48px;
-            color: #ff4444;
-            font-weight: bold;
-            margin: 4px 0;
-            text-shadow: 0 0 12px rgba(255, 68, 68, 0.8);
-        }
+        .result-title { font-size: 24px; color: #ffd700; margin-bottom: 12px; font-weight: bold; }
+        .rank-badge { font-size: 48px; color: #ff4444; font-weight: bold; margin: 4px 0; }
         #restart-btn {
-            width: 85%;
-            padding: 16px;
+            width: 85%; padding: 16px;
             background: linear-gradient(180deg, #ffea00, #ff8800);
-            border: 3px solid #ffffff;
-            border-radius: 30px;
-            color: #000;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.7);
-            touch-action: manipulation;
+            border: 3px solid #ffffff; border-radius: 30px;
+            color: #000; font-size: 20px; font-weight: bold;
         }
     </style>
 </head>
@@ -228,7 +181,7 @@
 
     <!-- ① スタート画面 -->
     <div id="start-screen">
-        <div class="start-header-card">
+        <div id="start-header-card">
             <h1>黄金ドングリを集め出せ！</h1>
             <p>警察に見つかる前にどんぐりを集めよう！</p>
         </div>
@@ -241,17 +194,17 @@
         <div>最高: <span id="high-score">0</span></div>
     </div>
 
-    <!-- ゲーム描画キャンバス -->
+    <!-- ゲーム描画 -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- ② プレイ中の操作ボタン -->
+    <!-- ② プレイ中のボタン -->
     <div id="controls">
         <div class="btn" id="btn-left">◀ 左</div>
         <div class="btn" id="btn-jump">▲ ジャンプ</div>
         <div class="btn" id="btn-right">右 ▶</div>
     </div>
 
-    <!-- ③ 結果発表画面 -->
+    <!-- ③ 結果画面 -->
     <div id="result-screen">
         <div class="result-board">
             <div class="result-title">【 結 果 発 表 】</div>
@@ -267,357 +220,241 @@
 
 <script>
     // ==========================================
-    // 🖼️ 画像自動検出＆プレロードシステム
+    // 🖼️ 画像自動設定システム (最新の1788～に対応)
     // ==========================================
     const IMAGE_CANDIDATES = [
-        '1768702691552.png',
-        '1768793217913.png',
-        '1768790264451.png',
-        'image.png',
-        'player.png',
-        'result_bg.png',
-        'title.png'
+        '1788702691552.png', // トップ画像
+        '1788793217973.png', // おばあちゃん
+        '1788793264451.png', // 結果発表
+        'image.png',         // ドングリ
+        'title.png', 'player.png', 'result.png', 'acorn.png' // もし名前を変えた時用
     ];
 
     const loadedImages = {};
     let playerImgObj = null;
+    let acornImgObj = null;
 
     function initImages() {
         let loadedCount = 0;
         IMAGE_CANDIDATES.forEach(filename => {
             const img = new Image();
-            img.onload = () => {
-                loadedImages[filename] = img;
-                checkDone();
-            };
+            img.onload = () => { loadedImages[filename] = img; checkDone(); };
             img.onerror = () => { checkDone(); };
             img.src = filename;
         });
 
         function checkDone() {
             loadedCount++;
-            if (loadedCount === IMAGE_CANDIDATES.length) {
-                applyLoadedImages();
-            }
+            if (loadedCount === IMAGE_CANDIDATES.length) applyLoadedImages();
         }
     }
 
     function applyLoadedImages() {
-        const keys = Object.keys(loadedImages);
-        if (keys.length === 0) return;
-
-        // 1. トップ画面背景
-        const titleImg = loadedImages['1768702691552.png'] || loadedImages['image.png'] || loadedImages[keys[0]];
+        // トップ画像
+        const titleImg = loadedImages['title.png'] || loadedImages['1788702691552.png'];
         if (titleImg) {
             document.getElementById('start-screen').style.backgroundImage = `url('${titleImg.src}')`;
+            document.getElementById('start-header-card').style.display = 'none'; // 画像に文字があるのでHTML枠を消す
         }
-
-        // 2. プレイヤー画像
-        playerImgObj = loadedImages['1768793217913.png'] || loadedImages['player.png'] || loadedImages[keys[1]] || loadedImages[keys[0]];
-
-        // 3. 結果画面背景
-        const resultImg = loadedImages['1768790264451.png'] || loadedImages['result_bg.png'] || loadedImages[keys[2]] || loadedImages[keys[0]];
+        // おばあちゃん
+        playerImgObj = loadedImages['player.png'] || loadedImages['1788793217973.png'];
+        // 結果画面
+        const resultImg = loadedImages['result.png'] || loadedImages['1788793264451.png'];
         if (resultImg) {
             document.getElementById('result-screen').style.backgroundImage = `url('${resultImg.src}')`;
         }
+        // 黄金ドングリ
+        acornImgObj = loadedImages['acorn.png'] || loadedImages['image.png'];
     }
 
     initImages();
 
     // ==========================================
-    // 🎵 Web Audio API BGM & 効果音
+    // 🎵 フリーズ対策済み サウンドシステム
     // ==========================================
     class SoundManager {
-        constructor() {
-            this.ctx = null;
-            this.bgmTimer = null;
-            this.muted = false;
-            this.step = 0;
-        }
+        constructor() { this.ctx = null; this.muted = false; }
         init() {
-            if (!this.ctx) {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (this.ctx.state === 'suspended') {
-                this.ctx.resume();
-            }
+            try {
+                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            } catch(e) { this.muted = true; }
         }
         playTone(freq, type, duration, vol=0.1) {
-            if (!this.ctx || this.muted) return;
             try {
+                this.init();
+                if (!this.ctx || this.muted) return;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = type;
                 osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
                 gain.gain.setValueAtTime(vol, this.ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + duration);
-            } catch(e){}
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + duration);
+            } catch(e) {}
         }
-        playJump() {
-            this.init();
-            if (!this.ctx || this.muted) return;
-            try {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(650, this.ctx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.15);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.15);
-            } catch(e){}
-        }
-        playCoin() {
-            this.init();
-            this.playTone(987, 'sine', 0.08, 0.15);
-            setTimeout(() => this.playTone(1318, 'sine', 0.15, 0.15), 60);
-        }
-        playGameOver() {
-            this.stopBGM();
-            this.playTone(400, 'sawtooth', 0.2, 0.2);
-            setTimeout(() => this.playTone(350, 'sawtooth', 0.2, 0.2), 150);
-            setTimeout(() => this.playTone(300, 'sawtooth', 0.2, 0.2), 300);
-            setTimeout(() => this.playTone(220, 'sawtooth', 0.5, 0.2), 450);
-        }
-        startBGM() {
-            this.init();
-            if (this.bgmTimer) clearInterval(this.bgmTimer);
-            const notes = [261, 329, 392, 523, 293, 349, 440, 587, 329, 392, 493, 659, 392, 329, 261, 196];
-            this.step = 0;
-            this.bgmTimer = setInterval(() => {
-                if (this.muted) return;
-                const note = notes[this.step % notes.length];
-                this.playTone(note, 'triangle', 0.12, 0.05);
-                if (this.step % 2 === 0) {
-                    this.playTone(130, 'sine', 0.1, 0.07);
-                }
-                this.step++;
-            }, 170);
-        }
-        stopBGM() {
-            if (this.bgmTimer) {
-                clearInterval(this.bgmTimer);
-                this.bgmTimer = null;
-            }
-        }
+        playJump() { this.playTone(400, 'sine', 0.15, 0.1); }
+        playCoin() { this.playTone(987, 'sine', 0.08, 0.15); setTimeout(() => this.playTone(1318, 'sine', 0.15, 0.15), 60); }
+        playGameOver() { this.playTone(220, 'sawtooth', 0.5, 0.2); }
     }
-
     const sound = new SoundManager();
-
     function toggleSound() {
         sound.muted = !sound.muted;
         document.getElementById('sound-btn').textContent = sound.muted ? '🔇' : '🔊';
     }
 
     // ==========================================
-    // 🎮 ゲーム進行・状態制御 (UI重なり防止)
+    // 🎮 ゲームシステム (フリーズ防止策強化)
     // ==========================================
     function setGameState(state) {
-        const startScreen = document.getElementById('start-screen');
-        const resultScreen = document.getElementById('result-screen');
-        const controls = document.getElementById('controls');
-
-        if (state === 'START') {
-            startScreen.style.display = 'flex';
-            resultScreen.style.display = 'none';
-            controls.style.display = 'none';
-        } else if (state === 'PLAYING') {
-            startScreen.style.display = 'none';
-            resultScreen.style.display = 'none';
-            controls.style.display = 'flex';
-        } else if (state === 'RESULT') {
-            startScreen.style.display = 'none';
-            resultScreen.style.display = 'flex';
-            controls.style.display = 'none'; // 操作ボタンを隠して重ねりを完全回避！
-        }
+        const s = document.getElementById('start-screen');
+        const r = document.getElementById('result-screen');
+        const c = document.getElementById('controls');
+        if (state === 'START') { s.style.display = 'flex'; r.style.display = 'none'; c.style.display = 'none'; }
+        else if (state === 'PLAYING') { s.style.display = 'none'; r.style.display = 'none'; c.style.display = 'flex'; }
+        else if (state === 'RESULT') { s.style.display = 'none'; r.style.display = 'flex'; c.style.display = 'none'; } // 操作ボタンは隠す！
     }
 
-    // ゲーム変数
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = 400;
-    canvas.height = 700;
+    canvas.width = 400; canvas.height = 700;
 
     let score = 0;
-    let highScore = localStorage.getItem('acorn_highscore') || 0;
+    let highScore = 0;
+    // localStorageエラーでゲームがフリーズするのを防止
+    try { highScore = localStorage.getItem('acorn_highscore') || 0; } catch(e) {}
     document.getElementById('high-score').textContent = highScore;
-    let isGameOver = false;
-    let isPlaying = false;
 
+    let isGameOver = false; let isPlaying = false;
     const lanes = [100, 200, 300];
-    let currentLane = 1;
-    let targetX = lanes[currentLane];
-    let playerX = targetX;
-    let playerY = 530;
-
-    let isJumping = false;
-    let jumpOffsetY = 0;
-    let jumpVelocity = 0;
+    let currentLane = 1; let targetX = lanes[currentLane];
+    let playerX = targetX; let playerY = 530;
+    let isJumping = false; let jumpOffsetY = 0; let jumpVelocity = 0;
     const gravity = 0.85;
+    let objects = []; let speed = 7; let spawnTimer = 0; let bgOffset = 0;
 
-    let objects = [];
-    let speed = 7;
-    let spawnTimer = 0;
-    let bgOffset = 0;
-
-    // 操作設定
     document.getElementById('btn-left').addEventListener('click', () => moveLane(-1));
     document.getElementById('btn-right').addEventListener('click', () => moveLane(1));
     document.getElementById('btn-jump').addEventListener('click', jump);
-
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') moveLane(-1);
-        if (e.key === 'ArrowRight') moveLane(1);
-        if (e.key === 'ArrowUp' || e.key === ' ') jump();
-    });
 
     function moveLane(dir) {
         if (!isPlaying || isGameOver) return;
         currentLane = Math.max(0, Math.min(2, currentLane + dir));
         targetX = lanes[currentLane];
     }
-
     function jump() {
         if (isPlaying && !isJumping && !isGameOver) {
-            isJumping = true;
-            jumpVelocity = -15;
-            sound.playJump();
+            isJumping = true; jumpVelocity = -15; sound.playJump();
         }
     }
 
     function startGame() {
-        isPlaying = true;
-        isGameOver = false;
+        try { sound.init(); } catch(e) {} // 音声エラーで止まらないようにする
+        isPlaying = true; isGameOver = false;
         setGameState('PLAYING');
-        sound.startBGM();
         gameLoop();
     }
 
     function spawnObject() {
         const lane = Math.floor(Math.random() * 3);
         const isObstacle = Math.random() < 0.35;
-        objects.push({
-            x: lanes[lane],
-            y: -50,
-            type: isObstacle ? 'rock' : 'acorn'
-        });
+        objects.push({ x: lanes[lane], y: -50, type: isObstacle ? 'rock' : 'acorn' });
     }
 
     function update() {
         if (!isPlaying || isGameOver) return;
-
         playerX += (targetX - playerX) * 0.25;
 
         if (isJumping) {
-            jumpOffsetY += jumpVelocity;
-            jumpVelocity += gravity;
-            if (jumpOffsetY >= 0) {
-                jumpOffsetY = 0;
-                isJumping = false;
-            }
+            jumpOffsetY += jumpVelocity; jumpVelocity += gravity;
+            if (jumpOffsetY >= 0) { jumpOffsetY = 0; isJumping = false; }
         }
-
         bgOffset = (bgOffset + speed) % 40;
-
         spawnTimer++;
-        if (spawnTimer > 30) {
-            spawnObject();
-            spawnTimer = 0;
-            speed += 0.003;
-        }
+        if (spawnTimer > 30) { spawnObject(); spawnTimer = 0; speed += 0.003; }
 
         for (let i = objects.length - 1; i >= 0; i--) {
-            let obj = objects[i];
-            obj.y += speed;
-
+            let obj = objects[i]; obj.y += speed;
             let dx = Math.abs(playerX - obj.x);
             let dy = Math.abs((playerY + jumpOffsetY) - obj.y);
 
             if (dx < 32 && dy < 38) {
                 if (obj.type === 'acorn') {
-                    score += 10;
-                    document.getElementById('score').textContent = score;
-                    sound.playCoin();
-                    objects.splice(i, 1);
-                    continue;
+                    score += 10; document.getElementById('score').textContent = score;
+                    sound.playCoin(); objects.splice(i, 1); continue;
                 } else if (obj.type === 'rock') {
-                    if (jumpOffsetY > -25) {
-                        endGame();
-                        return;
-                    }
+                    if (jumpOffsetY > -25) { endGame(); return; }
                 }
             }
-
-            if (obj.y > canvas.height + 50) {
-                objects.splice(i, 1);
-            }
+            if (obj.y > canvas.height + 50) objects.splice(i, 1);
         }
     }
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 背景道路
-        ctx.fillStyle = '#2d3725';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = '#5a4332';
-        ctx.fillRect(50, 0, 300, canvas.height);
-
-        ctx.strokeStyle = '#8d7052';
-        ctx.setLineDash([20, 20]);
-        ctx.lineDashOffset = -bgOffset;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
+        // 背景
+        ctx.fillStyle = '#2d3725'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#5a4332'; ctx.fillRect(50, 0, 300, canvas.height);
+        ctx.strokeStyle = '#8d7052'; ctx.setLineDash([20, 20]);
+        ctx.lineDashOffset = -bgOffset; ctx.lineWidth = 3; ctx.beginPath();
         ctx.moveTo(150, 0); ctx.lineTo(150, canvas.height);
-        ctx.moveTo(250, 0); ctx.lineTo(250, canvas.height);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.moveTo(250, 0); ctx.lineTo(250, canvas.height); ctx.stroke(); ctx.setLineDash([]);
 
-        // オブジェクト
+        // オブジェクト（黄金ドングリ画像適用）
         objects.forEach(obj => {
             if (obj.type === 'acorn') {
-                ctx.fillStyle = '#ffd700';
-                ctx.beginPath();
-                ctx.arc(obj.x, obj.y, 14, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#fff';
-                ctx.stroke();
+                if (acornImgObj && acornImgObj.complete && acornImgObj.naturalWidth !== 0) {
+                    ctx.drawImage(acornImgObj, obj.x - 22, obj.y - 24, 44, 44);
+                } else {
+                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(obj.x, obj.y, 14, 0, Math.PI * 2); ctx.fill();
+                }
             } else {
-                ctx.fillStyle = '#6c7a89';
-                ctx.beginPath();
-                ctx.arc(obj.x, obj.y, 22, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#34495e';
-                ctx.fillRect(obj.x - 16, obj.y - 6, 32, 12);
+                ctx.fillStyle = '#6c7a89'; ctx.beginPath(); ctx.arc(obj.x, obj.y, 22, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#34495e'; ctx.fillRect(obj.x - 16, obj.y - 6, 32, 12);
             }
         });
 
         // プレイヤー描画
         const drawY = playerY + jumpOffsetY;
-
-        // 影
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.beginPath();
-        ctx.ellipse(playerX, playerY + 40, 28, 10, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 40, 28, 10, 0, 0, Math.PI * 2); ctx.fill();
 
         if (playerImgObj && playerImgObj.complete && playerImgObj.naturalWidth !== 0) {
-            const w = 140;
-            const h = 170;
-            ctx.drawImage(playerImgObj, playerX - w/2, drawY - h/2, w, h);
+            const w = 120; const h = 180;
+            ctx.drawImage(playerImgObj, playerX - w/2, drawY - h + 30, w, h);
         } else {
-            // 画像未読み込み時のフォールバックアイコン
-            ctx.fillStyle = '#e67e22';
-            ctx.beginPath();
-            ctx.arc(playerX, drawY, 26, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#ffffff'
+            ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.arc(playerX, drawY, 26, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+
+    function gameLoop() {
+        update(); draw();
+        if (isPlaying && !isGameOver) requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+        isGameOver = true; isPlaying = false; sound.playGameOver();
+        try {
+            if (score > highScore) {
+                highScore = score; localStorage.setItem('acorn_highscore', highScore);
+                document.getElementById('high-score').textContent = highScore;
+            }
+        } catch(e) {}
+
+        let rank = 'C';
+        if (score >= 300) rank = 'S'; else if (score >= 200) rank = 'A'; else if (score >= 100) rank = 'B';
+        document.getElementById('res-score').textContent = score;
+        document.getElementById('res-rank').textContent = rank;
+        setGameState('RESULT');
+    }
+
+    function resetGame() {
+        score = 0; speed = 7; currentLane = 1; targetX = lanes[1]; playerX = targetX; objects = [];
+        document.getElementById('score').textContent = 0; startGame();
+    }
+
+    setGameState('START');
+</script>
+</body>
+</html>
