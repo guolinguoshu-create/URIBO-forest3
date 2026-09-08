@@ -51,16 +51,16 @@
 
         /* スコアエリア */
         #mid-score-board {
-            position: absolute; bottom: 88px; left: 12px; right: 12px;
+            position: absolute; bottom: 105px; left: 12px; right: 12px;
             background: rgba(15, 25, 15, 0.85); border: 2px solid #ffd700; border-radius: 14px;
             display: none; justify-content: space-around; align-items: center; padding: 8px 0;
             color: #ffffff; font-size: 15px; font-weight: bold; z-index: 40;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        /* 操作ボタン */
+        /* 操作ボタン（下すぎないように位置を修正） */
         #controls {
-            position: absolute; bottom: 18px; left: 12px; right: 12px; display: none;
+            position: absolute; bottom: 25px; left: 12px; right: 12px; display: none;
             justify-content: space-between; gap: 8px; z-index: 40;
         }
         .ctrl-btn {
@@ -95,9 +95,8 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v26 DIRECT ONCLICK</div>
+    <div id="version-tag">v27 TRANSPARENT & CEREMONY</div>
 
-    <!-- スタート画面：onclickを直接埋め込み -->
     <div id="start-screen">
         <button class="massive-btn" onclick="startGameForce()">ゲームスタート！</button>
     </div>
@@ -120,10 +119,9 @@
         <button class="ctrl-btn" onclick="moveLane(1)">右 ▶</button>
     </div>
 
-    <!-- 結果画面：onclickを直接埋め込み -->
     <div id="result-screen">
         <div class="result-board">
-            <div style="font-size: 22px; color: #ffd700; font-weight: bold; text-shadow: 1px 1px 3px #000;">🏆 結果発表 🏆</div>
+            <div style="font-size: 22px; color: #ffd700; font-weight: bold; text-shadow: 1px 1px 3px #000;">🏆 栄光の表彰式 🏆</div>
             <p style="margin-top:8px; font-size:15px;">押収ドングリ: <span id="res-score" style="font-size:30px; color:#ffd700; font-weight:bold;">0</span> 個</p>
             <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
             <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
@@ -143,7 +141,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v26') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v27') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -208,29 +206,29 @@
         } catch(e) {}
     }
 
+    // 表彰式らしい豪華で厳かなファンファーレBGM
     function playResultFanfare() {
         if (!isBgmOn || !audioCtx) return;
         if (bgmTimer) clearInterval(bgmTimer);
         try {
             var time = audioCtx.currentTime;
-            var melody = [523.25, 523.25, 523.25, 659.25, 783.99, 0, 659.25, 783.99, 1046.50];
-            var duration = [0.15, 0.15, 0.15, 0.3, 0.3, 0.15, 0.15, 0.15, 0.6];
+            // 表彰式風のファンファーレ音階 (ド・ミ・ソ・高いド、など)
+            var melody = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+            var duration = [0.2, 0.2, 0.2, 0.4, 0.2, 0.8];
             var offset = 0;
             
             for (var i = 0; i < melody.length; i++) {
                 var freq = melody[i];
                 var dur = duration[i];
-                if (freq > 0) {
-                    var osc = audioCtx.createOscillator();
-                    var gain = audioCtx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0.1, time + offset);
-                    gain.gain.exponentialRampToValueAtTime(0.001, time + offset + dur);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(time + offset);
-                    osc.stop(time + offset + dur);
-                }
+                var osc = audioCtx.createOscillator();
+                var gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.12, time + offset);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + offset + dur);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(time + offset);
+                osc.stop(time + offset + dur);
                 offset += dur;
             }
         } catch(e) {}
@@ -282,10 +280,45 @@
         }
     }
 
-    var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
-    var imgAcorn = new Image(); imgAcorn.src = 'image.png';
+    // 白背景を自動で透過させる関数
+    function createTransparentImage(src, callback) {
+        var img = new Image();
+        img.src = src;
+        img.onload = function() {
+            var c = document.createElement('canvas');
+            var cx = c.getContext('2d');
+            c.width = img.width;
+            c.height = img.height;
+            cx.drawImage(img, 0, 0);
+            try {
+                var imgData = cx.getImageData(0, 0, c.width, c.height);
+                var data = imgData.data;
+                for (var i = 0; i < data.length; i += 4) {
+                    var r = data[i], g = data[i+1], b = data[i+2];
+                    // 白っぽい部分（RGBすべて235以上）を透明に変換
+                    if (r > 235 && g > 235 && b > 235) {
+                        data[i+3] = 0;
+                    }
+                }
+                cx.putImageData(imgData, 0, 0);
+                var transImg = new Image();
+                transImg.src = c.toDataURL();
+                transImg.onload = function() {
+                    callback(transImg);
+                };
+            } catch(e) {
+                callback(img);
+            }
+        };
+    }
 
-    // 強制スタート関数（HTMLから直接呼び出し）
+    var imgPlayer = null;
+    var imgAcorn = null;
+
+    // 画像のロードと透過処理の適用
+    createTransparentImage('1788793264451.png', function(res) { imgPlayer = res; });
+    createTransparentImage('image.png', function(res) { imgAcorn = res; });
+
     window.startGameForce = function() {
         safeInitAudio();
 
@@ -339,7 +372,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v26', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v27', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -439,35 +472,11 @@
                     ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(o.x - 8, o.y - 4, 4, 0, Math.PI * 2); ctx.arc(o.x + 8, o.y - 4, 4, 0, Math.PI * 2); ctx.fill();
                 }
             } else {
-                if (imgAcorn.complete && imgAcorn.naturalWidth > 0) {
-                    ctx.drawImage(imgAcorn, o.x - 32, o.y - 32, 64, 64);
+                // ドングリの縮尺修正＆透過描画
+                if (imgAcorn && imgAcorn.complete && imgAcorn.naturalWidth > 0) {
+                    ctx.drawImage(imgAcorn, o.x - 22, o.y - 22, 44, 44);
                 } else {
                     ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI * 2); ctx.fill();
                 }
             }
-            if (o.y > 780) objects.splice(i, 1);
-        }
-
-        var pDrawY = playerY + jumpY;
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 58, 48, 12, 0, 0, 6.28); ctx.fill();
-
-        if (imgPlayer.complete && imgPlayer.naturalWidth > 0) {
-            var srcW = imgPlayer.naturalWidth;
-            var srcH = imgPlayer.naturalHeight * 0.82;
-            ctx.drawImage(imgPlayer, 0, 0, srcW, srcH, playerX - 75, pDrawY - 80, 150, 135);
-        } else {
-            ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 20, 30, 0, Math.PI*2); ctx.fill();
-        }
-
-        if (speedUpNotifyTimer > 0) {
-            speedUpNotifyTimer--;
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.95)';
-            ctx.font = '900 26px sans-serif';
-            ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 5;
-            ctx.strokeText('⚡ SPEED UP! ⚡', 200, 260); ctx.fillText('⚡ SPEED UP! ⚡', 200, 260);
-        }
-        if (isPlaying) requestAnimationFrame(gameLoop);
-    }
-</script>
-</body>
-</html>
+            if (o.y > 780) objects.splice(i, 
