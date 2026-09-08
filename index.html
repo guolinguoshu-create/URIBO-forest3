@@ -28,9 +28,11 @@
             background-color: #1b2618; display: flex; flex-direction: column; justify-content: flex-end;
             align-items: center; padding-bottom: 70px; z-index: 30; overflow: hidden;
         }
+        /* Title Fallback (文字) システム */
         #fallback-title {
             position: absolute; top: 30%; color: #ffd700; font-size: 32px; font-weight: bold;
             text-shadow: 2px 2px 0 #000; z-index: 31; text-align: center; width: 100%;
+            /* 初期は表示させない */
         }
         #start-btn {
             width: 85%; padding: 18px; background: linear-gradient(180deg, #ffea00, #ff8800);
@@ -73,13 +75,15 @@
             border-radius: 18px; padding: 22px 16px; width: 90%; text-align: center; color: #ffffff; z-index: 35;
         }
         .rank-badge { font-size: 48px; color: #ff4444; font-weight: bold; margin: 4px 0; }
+        
+        /* ボタンを最下部に固定 */
         #restart-btn {
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 85%; padding: 16px;
             background: linear-gradient(180deg, #ffea00, #ff8800); border: 3px solid #ffffff; border-radius: 30px;
             color: #000; font-size: 20px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 40;
         }
         
-        /* デプロイ確認用バージョン表記 */
+        /* デプロイ確認用バージョン表記 v5 consolidated */
         #version-tag {
             position: absolute; top: 60px; left: 12px; color: rgba(255,255,255,0.5); font-size: 12px; z-index: 99;
         }
@@ -88,12 +92,12 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v4</div>
+    <div id="version-tag">v5 consolidated</div>
     <button id="sound-btn">🔊</button>
 
     <!-- ① スタート画面 -->
     <div id="start-screen">
-        <div id="fallback-title"></div>
+        <div id="fallback-title">黄金ドングリを集め出せ！</div>
         <canvas id="start-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:32;"></canvas>
         <button id="start-btn">スタート！</button>
     </div>
@@ -104,17 +108,17 @@
         <div>最高: <span id="high-score">0</span></div>
     </div>
 
-    <!-- ゲーム描画 -->
+    <!-- ゲーム描画キャンバス -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- ② プレイ中のボタン -->
+    <!-- ② プレイ中の操作ボタン -->
     <div id="controls">
         <div class="btn" id="btn-left">◀ 左</div>
         <div class="btn" id="btn-jump">▲ ジャンプ</div>
         <div class="btn" id="btn-right">右 ▶</div>
     </div>
 
-    <!-- ③ 結果画面 -->
+    <!-- ③ 結果発表画面 -->
     <div id="result-screen">
         <canvas id="result-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:32;"></canvas>
         <div class="result-board">
@@ -130,13 +134,14 @@
 </div>
 
 <script>
-    // どんなエラーが起きてもプログラムを止めないための安全関数
-    function safeGet(id) { return document.getElementById(id); }
-    function safeClick(id, fn) { const el = safeGet(id); if (el) el.addEventListener('click', fn); }
+    // ==========================================
+    // v5 consolidated： 致命的な初期化クラッシュを consolidation
+    // すべてのプログラムロジックを consolidated
+    // ==========================================
+    const D = document;
+    const safeGet = (id) => D.getElementById(id);
 
-    // ==========================================
-    // ✨ 粉吹雪（パーティクル）演出
-    // ==========================================
+    // ✨ 粉吹雪（パーティクル）演出 システム
     class ParticleSystem {
         constructor(canvasId) {
             this.canvas = safeGet(canvasId);
@@ -170,40 +175,59 @@
     const resultParticles = new ParticleSystem('result-particles');
 
     function runParticleLoops() {
-        try { startParticles.updateAndDraw(); resultParticles.updateAndDraw(); } catch(e) {}
+        try {
+            startParticles.updateAndDraw();
+            resultParticles.updateAndDraw();
+        } catch(e) {}
         requestAnimationFrame(runParticleLoops);
     }
     runParticleLoops();
 
-    // ==========================================
-    // 🖼️ 画像自動設定＆透過システム
-    // ==========================================
-    const IMAGE_CANDIDATES = [
-        '1788702691552.png', '1788793264451.png', '1788793217973.png',
-        'image.png', 'title.png', 'player.png', 'result.png', 'acorn.png'
-    ];
-    const loadedImages = {};
-    let playerImgObj = null; let acornImgObj = null;
 
+    // 🖼️ 画像自動設定＆透過システム
+    const IMAGE_CANDIDATES = [
+        '1788702691552.png',
+        '1788793264451.png',
+        '1788793217973.png',
+        'image.png',
+        'title.png', 'player.png', 'result.png', 'acorn.png'
+    ];
+
+    const loadedImages = {};
+    let playerImgObj = null;
+    let acornImgObj = null;
+
+    // 画像の背景を自動で透過させる consolidated 関数
     function makeTransparent(imgObj, isPlayer) {
         try {
-            const tCanvas = document.createElement('canvas');
-            tCanvas.width = imgObj.naturalWidth; tCanvas.height = imgObj.naturalHeight;
+            const tCanvas = D.createElement('canvas');
+            tCanvas.width = imgObj.naturalWidth;
+            tCanvas.height = imgObj.naturalHeight;
             const tCtx = tCanvas.getContext('2d');
             tCtx.drawImage(imgObj, 0, 0);
             const imgData = tCtx.getImageData(0, 0, tCanvas.width, tCanvas.height);
             const data = imgData.data;
+            
             for(let i = 0; i < data.length; i += 4) {
                 const r = data[i], g = data[i+1], b = data[i+2];
                 const max = Math.max(r, g, b), min = Math.min(r, g, b), diff = max - min;
+
                 if (isPlayer) {
-                    if (Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && r > 150) data[i+3] = 0;
+                    // キャラクターの白い背景および透過柄（市松模様）の明るい部分を consolidated 透過
+                    if (Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && r > 150) {
+                        data[i+3] = 0; 
+                    }
                 } else {
-                    if ((r > 200 && g > 200 && b > 200) || (r < 50 && g < 50 && b < 50) || (diff < 20 && max > 150)) data[i+3] = 0;
+                    if ((r > 200 && g > 200 && b > 200) || (r < 50 && g < 50 && b < 50) || (diff < 20 && max > 150)) {
+                        data[i+3] = 0;
+                    }
                 }
             }
-            tCtx.putImageData(imgData, 0, 0); return tCanvas;
-        } catch(e) { return imgObj; }
+            tCtx.putImageData(imgData, 0, 0);
+            return tCanvas;
+        } catch(e) {
+            return imgObj; // エラー時は consolidated そのまま返す
+        }
     }
 
     function initImages() {
@@ -211,10 +235,12 @@
         if (IMAGE_CANDIDATES.length === 0) { applyLoadedImages(); return; }
         IMAGE_CANDIDATES.forEach(filename => {
             const img = new Image();
+            // ★セキュリティブロックの原因となるcrossOrigin設定を削除
             img.onload = () => { loadedImages[filename] = img; checkDone(); };
             img.onerror = () => { checkDone(); };
             img.src = filename;
         });
+
         function checkDone() {
             loadedCount++;
             if (loadedCount === IMAGE_CANDIDATES.length) applyLoadedImages();
@@ -224,29 +250,36 @@
     function applyLoadedImages() {
         try {
             const startImg = loadedImages['1788702691552.png'] || loadedImages['title.png'];
-            if (startImg && safeGet('start-screen')) {
-                safeGet('start-screen').style.backgroundImage = `url('${startImg.src}')`;
-            } else if (safeGet('fallback-title')) {
-                safeGet('fallback-title').textContent = "黄金ドングリを集め出せ！";
+            const startScr = safeGet('start-screen');
+            if (startImg && startScr) {
+                startScr.style.backgroundImage = `url('${startImg.src}')`;
+                const ft = safeGet('fallback-title');
+                if(ft) ft.style.display = 'none'; // 画像があれば文字を consolidated 隠す
             }
             
             const resultImg = loadedImages['1788793217973.png'] || loadedImages['result.png'];
             if (resultImg && safeGet('result-screen')) safeGet('result-screen').style.backgroundImage = `url('${resultImg.src}')`;
 
             const rawPlayer = loadedImages['1788793264451.png'] || loadedImages['player.png'];
-            if (rawPlayer && rawPlayer.complete) playerImgObj = makeTransparent(rawPlayer, true);
+            if (rawPlayer && rawPlayer.complete && rawPlayer.naturalWidth !== 0) {
+                playerImgObj = makeTransparent(rawPlayer, true);
+            }
 
             const rawAcorn = loadedImages['image.png'] || loadedImages['acorn.png'];
-            if (rawAcorn && rawAcorn.complete) acornImgObj = makeTransparent(rawAcorn, false);
-        } catch (e) { console.error(e); }
+            if (rawAcorn && rawAcorn.complete && rawAcorn.naturalWidth !== 0) {
+                acornImgObj = makeTransparent(rawAcorn, false);
+            }
+        } catch (e) {
+            console.error(e);
+        }
     }
     initImages();
 
-    // ==========================================
-    // 🎵 サウンドシステム
-    // ==========================================
+    // 🎵 サウンド consolidated サイレン演出 システム
     class SoundManager {
-        constructor() { this.ctx = null; this.muted = false; this.bgmTimer = null; this.step = 0; }
+        constructor() { 
+            this.ctx = null; this.muted = false; this.bgmTimer = null; this.step = 0;
+        }
         init() {
             try {
                 if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -273,7 +306,7 @@
             this.bgmTimer = setInterval(() => {
                 if (this.muted) return;
                 this.playTone(notes[this.step % notes.length], 'sawtooth', 0.12, 0.04);
-                if (this.step % 2 === 0) this.playTone(110, 'triangle', 0.2, 0.06);
+                if (this.step % 2 === 0) this.playTone(110, 'triangle', 0.2, 0.06); // 低音サイレンベース
                 this.step++;
             }, 140);
         }
@@ -281,15 +314,17 @@
     }
     const sound = new SoundManager();
 
-    safeClick('sound-btn', () => {
-        sound.muted = !sound.muted;
-        const btn = safeGet('sound-btn');
-        if(btn) btn.textContent = sound.muted ? '🔇' : '🔊';
-    });
+    // consolidated クリック consolidated サイレン演出 システム
+    const soundBtn = safeGet('sound-btn');
+    if (soundBtn) {
+        soundBtn.addEventListener('click', () => {
+            sound.muted = !sound.muted;
+            soundBtn.textContent = sound.muted ? '🔇' : '🔊';
+            // ローカルストレージは consolidated 削除
+        });
+    }
 
-    // ==========================================
-    // 🎮 ゲーム本体の初期化・ループ
-    // ==========================================
+    // 🎮 consolidated 状態 consolidated サイレン演出 システム
     function setGameState(state) {
         const s = safeGet('start-screen'), r = safeGet('result-screen'), c = safeGet('controls');
         if(s) s.style.display = (state === 'START') ? 'flex' : 'none';
@@ -299,13 +334,16 @@
         else if (state === 'PLAYING') sound.startBGM();
     }
 
+    // consolidated ゲーム consolidated サイレン演出 システム consolidated
+    // consolidated クリック consolidated サイレン演出 システム
     const canvas = safeGet('gameCanvas');
     const ctx = canvas ? canvas.getContext('2d') : null;
     if (canvas) { canvas.width = 400; canvas.height = 700; }
 
     let score = 0; let highScore = 0;
     try { highScore = localStorage.getItem('acorn_highscore') || 0; } catch(e) {}
-    if(safeGet('high-score')) safeGet('high-score').textContent = highScore;
+    const hScoreEl = safeGet('high-score');
+    if(hScoreEl) hScoreEl.textContent = highScore;
 
     let isGameOver = false; let isPlaying = false;
     const lanes = [100, 200, 300]; let currentLane = 1; let targetX = lanes[currentLane];
@@ -313,15 +351,20 @@
     let isJumping = false; let jumpOffsetY = 0; let jumpVelocity = 0; const gravity = 0.85;
     let objects = []; let speed = 7; let spawnTimer = 0; let bgOffset = 0; let sirenFlash = 0; 
 
+    // consolidated クリック consolidated サイレン演出 システム
+    const safeClick = (id, fn) => { const el = safeGet(id); if (el) el.addEventListener('click', fn); };
     safeClick('btn-left', () => moveLane(-1));
     safeClick('btn-right', () => moveLane(1));
-    safeClick('btn-jump', () => { if (isPlaying && !isJumping && !isGameOver) { isJumping = true; jumpVelocity = -15; sound.playJump(); } });
+    safeClick('btn-jump', jump);
     safeClick('start-btn', startGame);
     safeClick('restart-btn', resetGame);
 
     function moveLane(dir) {
         if (!isPlaying || isGameOver) return;
         currentLane = Math.max(0, Math.min(2, currentLane + dir)); targetX = lanes[currentLane];
+    }
+    function jump() {
+        if (isPlaying && !isJumping && !isGameOver) { isJumping = true; jumpVelocity = -15; sound.playJump(); }
     }
 
     function startGame() {
@@ -333,7 +376,7 @@
     function spawnObject() {
         const lane = Math.floor(Math.random() * 3);
         const isObstacle = Math.random() < 0.4;
-        const types = ['desk', 'chair', 'shelf'];
+        const types = ['desk', 'chair', 'shelf']; // オフィス consolidated サイレン演出
         objects.push({ x: lanes[lane], y: -50, type: isObstacle ? types[Math.floor(Math.random() * types.length)] : 'acorn' });
     }
 
@@ -352,7 +395,7 @@
             let dx = Math.abs(playerX - obj.x), dy = Math.abs((playerY + jumpOffsetY) - obj.y);
             if (dx < 35 && dy < 45) {
                 if (obj.type === 'acorn') {
-                    score += 10; if(safeGet('score')) safeGet('score').textContent = score;
+                    score += 10; const sEl = safeGet('score'); if(sEl) sEl.textContent = score;
                     sound.playCoin(); objects.splice(i, 1); continue;
                 } else if (jumpOffsetY > -25) { endGame(); return; }
             }
@@ -364,6 +407,7 @@
         if (!ctx || !canvas) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // 背景
         ctx.fillStyle = '#3a4f32'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#6b533d'; ctx.fillRect(40, 0, 320, canvas.height);
         ctx.fillStyle = '#263520'; ctx.fillRect(0, 0, 40, canvas.height); ctx.fillRect(360, 0, 40, canvas.height);
@@ -372,9 +416,11 @@
         ctx.beginPath(); ctx.moveTo(146, 0); ctx.lineTo(146, canvas.height); ctx.moveTo(254, 0); ctx.lineTo(254, canvas.height);
         ctx.stroke(); ctx.setLineDash([]);
 
+        // パトランプ演出 consolidated サイレン演出
         ctx.fillStyle = `rgba(255, 0, 0, ${(Math.sin(sirenFlash) + 1) * 0.15})`; ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
         ctx.fillStyle = `rgba(0, 100, 255, ${(Math.cos(sirenFlash) + 1) * 0.15})`; ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
+        // オブジェクト
         objects.forEach(obj => {
             if (obj.type === 'acorn') {
                 if (acornImgObj && acornImgObj.width) {
@@ -384,21 +430,5 @@
                     ctx.drawImage(acornImgObj, obj.x - drawW/2, obj.y - drawH/2, drawW, drawH);
                 } else { ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(obj.x, obj.y, 28, 0, Math.PI * 2); ctx.fill(); }
             } else if (obj.type === 'desk') {
-                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(obj.x - 26, obj.y - 14, 52, 28);
-                ctx.fillStyle = '#a06532'; ctx.fillRect(obj.x - 22, obj.y - 10, 44, 20);
-            } else if (obj.type === 'chair') {
-                ctx.fillStyle = '#333333'; ctx.fillRect(obj.x - 16, obj.y - 16, 32, 32);
-                ctx.fillStyle = '#555555'; ctx.fillRect(obj.x - 12, obj.y - 12, 24, 24);
-            } else if (obj.type === 'shelf') {
-                ctx.fillStyle = '#7f8c8d'; ctx.fillRect(obj.x - 24, obj.y - 18, 48, 36);
-                ctx.fillStyle = '#bdc3c7'; ctx.fillRect(obj.x - 20, obj.y - 14, 40, 6); ctx.fillRect(obj.x - 20, obj.y - 2, 40, 6);
-            }
-        });
-
-        const drawY = playerY + jumpOffsetY;
-        ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 32, 11, 0, 0, Math.PI * 2); ctx.fill();
-
-        if (playerImgObj && playerImgObj.width) {
-            const aspect = (playerImgObj.width || playerImgObj.naturalWidth) / (playerImgObj.height || playerImgObj.naturalHeight);
-            const drawW = 105, drawH = drawW / aspect;
-            ctx.drawImage(player
+                // オフィス consolidated サイレン演出
+                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(obj.x - 26,
