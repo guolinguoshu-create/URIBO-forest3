@@ -18,6 +18,7 @@
         /* スタート画面 */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('1788702691552.png');
             background-size: cover; background-position: center;
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
             padding-bottom: 70px; z-index: 50;
@@ -25,6 +26,7 @@
         #fallback-title {
             position: absolute; top: 25%; color: #ffd700; font-size: 34px; font-weight: bold;
             text-shadow: 3px 3px 0 #000, 0 0 15px rgba(255,215,0,0.6); text-align: center; width: 100%; z-index: 51;
+            display: none;
         }
         .massive-btn {
             width: 85%; padding: 18px; background: linear-gradient(180deg, #ffe600, #ff8800);
@@ -76,6 +78,7 @@
         /* 結果発表画面 */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('1788793217973.png');
             background-size: cover; background-position: center;
             display: none; flex-direction: column; justify-content: flex-start; align-items: center;
             padding-top: 45px; z-index: 50;
@@ -95,7 +98,7 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v18 FULLY FIXED</div>
+    <div id="version-tag">v20 FIXED</div>
 
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
@@ -142,7 +145,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v18') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v20') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -160,7 +163,6 @@
     var isBgmOn = true;
     var speedUpNotifyTimer = 0;
 
-    // 音声コントロール
     var audioCtx = null;
     var bgmTimer = null;
 
@@ -282,19 +284,9 @@
         }
     }
 
-    // 画像読込
-    var imgTitle = new Image(); imgTitle.src = '1788702691552.png';
-    var imgResult = new Image(); imgResult.src = '1788793217973.png';
+    // 画像読込（GitHubにある正確なファイル名）
     var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
     var imgAcorn = new Image(); imgAcorn.src = 'image.png';
-
-    imgTitle.onload = function() {
-        D.getElementById('start-screen').style.backgroundImage = "url('" + imgTitle.src + "')";
-        D.getElementById('fallback-title').style.display = "none";
-    };
-    imgResult.onload = function() {
-        D.getElementById('result-screen').style.backgroundImage = "url('" + imgResult.src + "')";
-    };
 
     // ゲーム開始関数
     function startGame() {
@@ -349,7 +341,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v18', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v20', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -460,7 +452,6 @@
             if (o.y > 780) objects.splice(i, 1);
         }
 
-        // --- ここから下が前回途切れてしまっていた部分です ---
         var pDrawY = playerY + jumpY;
         ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 58, 48, 12, 0, 0, 6.28); ctx.fill();
 
@@ -469,4 +460,14 @@
             var srcH = imgPlayer.naturalHeight * 0.82;
             ctx.drawImage(imgPlayer, 0, 0, srcW, srcH, playerX - 75, pDrawY - 80, 150, 135);
         } else {
-            ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 20, 30, 0, Math.PI*2); ctx.fil
+            ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 20, 30, 0, Math.PI*2); ctx.fill();
+        }
+
+        if (speedUpNotifyTimer > 0) {
+            speedUpNotifyTimer--;
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.95)';
+            ctx.font = '900 26px sans-serif';
+            ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 5;
+            ctx.strokeText('⚡ SPEED UP! ⚡', 200, 260); ctx.fillText('⚡ SPEED UP! ⚡', 200, 260);
+        }
+        if (i
