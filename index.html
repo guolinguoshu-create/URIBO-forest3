@@ -27,10 +27,11 @@
             text-shadow: 3px 3px 0 #000, 0 0 15px rgba(255,215,0,0.6); text-align: center; width: 100%; z-index: 51;
         }
         .massive-btn {
-            width: 85%; padding: 16px; background: linear-gradient(180deg, #ffe600, #ff8800);
+            width: 85%; padding: 18px; background: linear-gradient(180deg, #ffe600, #ff8800);
             border: 3px solid #ffffff; border-radius: 40px; color: #1a0000; font-size: 22px; font-weight: bold;
             box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 60; cursor: pointer; text-align: center;
-            text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+            text-shadow: 0 1px 0 rgba(255,255,255,0.6); outline: none; -webkit-tap-highlight-color: transparent;
+            font-family: inherit;
         }
         .massive-btn:active { transform: scale(0.96); filter: brightness(0.9); }
 
@@ -44,6 +45,7 @@
         .bgm-btn {
             background: linear-gradient(180deg, #444, #222); border: 1.5px solid #ffd700; color: #ffd700;
             padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;
+            outline: none; font-family: inherit;
         }
         .bgm-btn.active { background: linear-gradient(180deg, #ff8800, #cc5500); color: #fff; }
 
@@ -67,6 +69,7 @@
             flex: 1; padding: 14px 0; background: linear-gradient(180deg, #a06836, #5c3818);
             border: 2px solid #ffd700; border-radius: 16px; color: #ffffff; font-weight: bold;
             font-size: 16px; text-align: center; box-shadow: 0 5px 12px rgba(0,0,0,0.5);
+            cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; font-family: inherit;
         }
         .ctrl-btn:active { background: #5c3818; transform: translateY(2px); }
 
@@ -92,16 +95,16 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v16 ABSOLUTE FIX</div>
+    <div id="version-tag">v17 GUARANTEED FIX</div>
 
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
-        <div class="massive-btn" onclick="startGame()">ゲームスタート！</div>
+        <button class="massive-btn" id="startBtn">ゲームスタート！</button>
     </div>
 
     <div id="top-bar">
         <div>黄金ドングリ回収作戦</div>
-        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM()">🎵 BGM: ON</button>
+        <button id="bgmToggleBtn" class="bgm-btn active">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -112,9 +115,9 @@
     </div>
 
     <div id="controls">
-        <div class="ctrl-btn" onclick="moveLane(-1)">◀ 左</div>
-        <div class="ctrl-btn" onclick="jumpAction()">▲ ジャンプ</div>
-        <div class="ctrl-btn" onclick="moveLane(1)">右 ▶</div>
+        <button class="ctrl-btn" id="leftBtn">◀ 左</button>
+        <button class="ctrl-btn" id="jumpBtn">▲ ジャンプ</button>
+        <button class="ctrl-btn" id="rightBtn">右 ▶</button>
     </div>
 
     <div id="result-screen">
@@ -124,7 +127,7 @@
             <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
             <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <div class="massive-btn" onclick="startGame()" style="position:relative; z-index:2; width:88%;">もう一度走る！</div>
+        <button class="massive-btn" id="restartBtn" style="position:relative; z-index:2; width:88%;">もう一度走る！</button>
     </div>
 </div>
 
@@ -137,7 +140,10 @@
     var isPlaying = false;
     var loopRunning = false;
     var score = 0;
-    var highScore = localStorage.getItem('acorn_highscore_v16') || 0;
+    var highScore = 0;
+    try {
+        highScore = localStorage.getItem('acorn_highscore_v17') || 0;
+    } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
     var lanes = [100, 200, 300];
@@ -154,7 +160,7 @@
     var isBgmOn = true;
     var speedUpNotifyTimer = 0;
 
-    // 音声コントロール（完全防御設計）
+    // 音声コントロール（超安全設計）
     var audioCtx = null;
     var bgmTimer = null;
 
@@ -276,43 +282,11 @@
         }
     }
 
-    // 画像読み込みと透過処理
-    function makeTransparent(img, callback) {
-        try {
-            var tempC = D.createElement('canvas');
-            tempC.width = img.width; tempC.height = img.height;
-            var tempCtx = tempC.getContext('2d');
-            tempCtx.drawImage(img, 0, 0);
-            var imgData = tempCtx.getImageData(0, 0, tempC.width, tempC.height);
-            var data = imgData.data;
-            for (var i = 0; i < data.length; i += 4) {
-                var r = data[i], g = data[i+1], b = data[i+2];
-                if ((r > 190 && g > 190 && b > 190) || (Math.abs(r - g) < 15 && Math.abs(g - b) < 15 && r > 160)) {
-                    data[i+3] = 0; 
-                }
-            }
-            tempCtx.putImageData(imgData, 0, 0);
-            var newImg = new Image();
-            newImg.onload = function() { callback(newImg); };
-            newImg.src = tempC.toDataURL();
-        } catch(e) { callback(img); }
-    }
-
-    var cleanPlayerImg = null;
-    var cleanAcornImg = null;
-
+    // 画像読込（シンプル＆超軽量設計）
     var imgTitle = new Image(); imgTitle.src = '1788702691552.png';
     var imgResult = new Image(); imgResult.src = '1788793217973.png';
-    
-    var imgPlayer = new Image();
-    imgPlayer.crossOrigin = 'anonymous';
-    imgPlayer.src = '1788793264451.png';
-    imgPlayer.onload = function() { makeTransparent(imgPlayer, function(res) { cleanPlayerImg = res; }); };
-
-    var imgAcorn = new Image();
-    imgAcorn.crossOrigin = 'anonymous';
-    imgAcorn.src = 'image.png';
-    imgAcorn.onload = function() { makeTransparent(imgAcorn, function(res) { cleanAcornImg = res; }); };
+    var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
+    var imgAcorn = new Image(); imgAcorn.src = 'image.png';
 
     imgTitle.onload = function() {
         D.getElementById('start-screen').style.backgroundImage = "url('" + imgTitle.src + "')";
@@ -322,7 +296,7 @@
         D.getElementById('result-screen').style.backgroundImage = "url('" + imgResult.src + "')";
     };
 
-    // ゲーム開始関数（絶対安全設計）
+    // ゲーム開始関数
     function startGame() {
         if (isPlaying) return;
 
@@ -375,7 +349,7 @@
 
         if (score > highScore) {
             highScore = score;
-            localStorage.setItem('acorn_highscore_v16', highScore);
+            try { localStorage.setItem('acorn_highscore_v17', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -391,6 +365,14 @@
             playResultFanfare();
         }, 150);
     }
+
+    // イベントリスナーの確実な登録
+    D.getElementById('startBtn').onclick = startGame;
+    D.getElementById('restartBtn').onclick = startGame;
+    D.getElementById('leftBtn').onclick = function() { moveLane(-1); };
+    D.getElementById('jumpBtn').onclick = jumpAction;
+    D.getElementById('rightBtn').onclick = function() { moveLane(1); };
+    D.getElementById('bgmToggleBtn').onclick = toggleBGM;
 
     var timer = 0;
     var speedCounter = 0;
@@ -421,6 +403,7 @@
             }
         }
 
+        // 背景描画
         ctx.fillStyle = '#2d5026'; ctx.fillRect(0, 0, 400, 700);
         ctx.fillStyle = '#9e744a'; ctx.fillRect(50, 0, 300, 700);
         ctx.strokeStyle = '#dca868'; ctx.lineWidth = 4; ctx.strokeRect(50, 0, 300, 700);
@@ -441,6 +424,7 @@
             ctx.fillStyle = '#e8f5e9'; ctx.beginPath(); ctx.arc(377, curY + 8, 4, 0, Math.PI * 2); ctx.fill();
         }
 
+        // オブジェクト処理
         for (var i = objects.length - 1; i >= 0; i--) {
             var o = objects[i];
             o.y += speed;
@@ -475,5 +459,19 @@
                     ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(o.x - 8, o.y - 4, 4, 0, Math.PI * 2); ctx.arc(o.x + 8, o.y - 4, 4, 0, Math.PI * 2); ctx.fill();
                 }
             } else {
-                var drawAcornImg = cleanAcornImg || imgAcorn;
-                if (drawAcornImg && drawAcornIm
+                if (imgAcorn.complete && imgAcorn.naturalWidth > 0) {
+                    ctx.drawImage(imgAcorn, o.x - 32, o.y - 32, 64, 64);
+                } else {
+                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+            if (o.y > 780) objects.splice(i, 1);
+        }
+
+        // プレイヤー描画
+        var pDrawY = playerY + jumpY;
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 58, 48, 12, 0, 0, 6.28); ctx.fill();
+
+        if (imgPlayer.complete && imgPlayer.naturalWidth > 0) {
+            var srcW = imgPlayer.naturalWidth;
+            var srcH = 
