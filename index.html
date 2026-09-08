@@ -95,16 +95,16 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v17 GUARANTEED FIX</div>
+    <div id="version-tag">v18 FULLY FIXED</div>
 
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
-        <button class="massive-btn" id="startBtn">ゲームスタート！</button>
+        <button class="massive-btn" id="startBtn" onclick="startGame()">ゲームスタート！</button>
     </div>
 
     <div id="top-bar">
         <div>黄金ドングリ回収作戦</div>
-        <button id="bgmToggleBtn" class="bgm-btn active">🎵 BGM: ON</button>
+        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM()">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -115,9 +115,9 @@
     </div>
 
     <div id="controls">
-        <button class="ctrl-btn" id="leftBtn">◀ 左</button>
-        <button class="ctrl-btn" id="jumpBtn">▲ ジャンプ</button>
-        <button class="ctrl-btn" id="rightBtn">右 ▶</button>
+        <button class="ctrl-btn" id="leftBtn" onclick="moveLane(-1)">◀ 左</button>
+        <button class="ctrl-btn" id="jumpBtn" onclick="jumpAction()">▲ ジャンプ</button>
+        <button class="ctrl-btn" id="rightBtn" onclick="moveLane(1)">右 ▶</button>
     </div>
 
     <div id="result-screen">
@@ -127,7 +127,7 @@
             <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
             <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <button class="massive-btn" id="restartBtn" style="position:relative; z-index:2; width:88%;">もう一度走る！</button>
+        <button class="massive-btn" id="restartBtn" style="position:relative; z-index:2; width:88%;" onclick="startGame()">もう一度走る！</button>
     </div>
 </div>
 
@@ -142,7 +142,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v17') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v18') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -160,7 +160,7 @@
     var isBgmOn = true;
     var speedUpNotifyTimer = 0;
 
-    // 音声コントロール（超安全設計）
+    // 音声コントロール
     var audioCtx = null;
     var bgmTimer = null;
 
@@ -282,7 +282,7 @@
         }
     }
 
-    // 画像読込（シンプル＆超軽量設計）
+    // 画像読込
     var imgTitle = new Image(); imgTitle.src = '1788702691552.png';
     var imgResult = new Image(); imgResult.src = '1788793217973.png';
     var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
@@ -349,7 +349,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v17', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v18', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -365,14 +365,6 @@
             playResultFanfare();
         }, 150);
     }
-
-    // イベントリスナーの確実な登録
-    D.getElementById('startBtn').onclick = startGame;
-    D.getElementById('restartBtn').onclick = startGame;
-    D.getElementById('leftBtn').onclick = function() { moveLane(-1); };
-    D.getElementById('jumpBtn').onclick = jumpAction;
-    D.getElementById('rightBtn').onclick = function() { moveLane(1); };
-    D.getElementById('bgmToggleBtn').onclick = toggleBGM;
 
     var timer = 0;
     var speedCounter = 0;
@@ -468,10 +460,13 @@
             if (o.y > 780) objects.splice(i, 1);
         }
 
-        // プレイヤー描画
+        // --- ここから下が前回途切れてしまっていた部分です ---
         var pDrawY = playerY + jumpY;
         ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 58, 48, 12, 0, 0, 6.28); ctx.fill();
 
         if (imgPlayer.complete && imgPlayer.naturalWidth > 0) {
             var srcW = imgPlayer.naturalWidth;
-            var srcH = 
+            var srcH = imgPlayer.naturalHeight * 0.82;
+            ctx.drawImage(imgPlayer, 0, 0, srcW, srcH, playerX - 75, pDrawY - 80, 150, 135);
+        } else {
+            ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 20, 30, 0, Math.PI*2); ctx.fil
