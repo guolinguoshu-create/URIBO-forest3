@@ -18,22 +18,18 @@
         /* スタート画面 */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #223322;
             background-image: url('1788702691552.png');
             background-size: cover; background-position: center;
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 70px; z-index: 50;
-        }
-        #fallback-title {
-            position: absolute; top: 25%; color: #ffd700; font-size: 34px; font-weight: bold;
-            text-shadow: 3px 3px 0 #000, 0 0 15px rgba(255,215,0,0.6); text-align: center; width: 100%; z-index: 51;
-            display: none;
+            padding-bottom: 90px; z-index: 50;
         }
         .massive-btn {
             width: 85%; padding: 18px; background: linear-gradient(180deg, #ffe600, #ff8800);
             border: 3px solid #ffffff; border-radius: 40px; color: #1a0000; font-size: 22px; font-weight: bold;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 60; cursor: pointer; text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 100; cursor: pointer; text-align: center;
             text-shadow: 0 1px 0 rgba(255,255,255,0.6); outline: none; -webkit-tap-highlight-color: transparent;
-            font-family: inherit;
+            font-family: inherit; pointer-events: auto;
         }
         .massive-btn:active { transform: scale(0.96); filter: brightness(0.9); }
 
@@ -78,6 +74,7 @@
         /* 結果発表画面 */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #223322;
             background-image: url('1788793217973.png');
             background-size: cover; background-position: center;
             display: none; flex-direction: column; justify-content: flex-start; align-items: center;
@@ -98,16 +95,15 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v20 FIXED</div>
+    <div id="version-tag">v22 WORKING</div>
 
     <div id="start-screen">
-        <div id="fallback-title">黄金ドングリを集め出せ！</div>
-        <button class="massive-btn" id="startBtn" onclick="startGame()">ゲームスタート！</button>
+        <button class="massive-btn" id="startBtn">ゲームスタート！</button>
     </div>
 
     <div id="top-bar">
         <div>黄金ドングリ回収作戦</div>
-        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM()">🎵 BGM: ON</button>
+        <button id="bgmToggleBtn" class="bgm-btn active">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -118,9 +114,9 @@
     </div>
 
     <div id="controls">
-        <button class="ctrl-btn" id="leftBtn" onclick="moveLane(-1)">◀ 左</button>
-        <button class="ctrl-btn" id="jumpBtn" onclick="jumpAction()">▲ ジャンプ</button>
-        <button class="ctrl-btn" id="rightBtn" onclick="moveLane(1)">右 ▶</button>
+        <button class="ctrl-btn" id="leftBtn">◀ 左</button>
+        <button class="ctrl-btn" id="jumpBtn">▲ ジャンプ</button>
+        <button class="ctrl-btn" id="rightBtn">右 ▶</button>
     </div>
 
     <div id="result-screen">
@@ -130,7 +126,7 @@
             <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
             <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <button class="massive-btn" id="restartBtn" style="position:relative; z-index:2; width:88%;" onclick="startGame()">もう一度走る！</button>
+        <button class="massive-btn" id="restartBtn" style="position:relative; z-index:100; width:88%;">もう一度走る！</button>
     </div>
 </div>
 
@@ -145,7 +141,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v20') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v22') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -284,11 +280,9 @@
         }
     }
 
-    // 画像読込（GitHubにある正確なファイル名）
     var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
     var imgAcorn = new Image(); imgAcorn.src = 'image.png';
 
-    // ゲーム開始関数
     function startGame() {
         if (isPlaying) return;
 
@@ -341,7 +335,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v20', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v22', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -387,7 +381,6 @@
             }
         }
 
-        // 背景描画
         ctx.fillStyle = '#2d5026'; ctx.fillRect(0, 0, 400, 700);
         ctx.fillStyle = '#9e744a'; ctx.fillRect(50, 0, 300, 700);
         ctx.strokeStyle = '#dca868'; ctx.lineWidth = 4; ctx.strokeRect(50, 0, 300, 700);
@@ -408,7 +401,6 @@
             ctx.fillStyle = '#e8f5e9'; ctx.beginPath(); ctx.arc(377, curY + 8, 4, 0, Math.PI * 2); ctx.fill();
         }
 
-        // オブジェクト処理
         for (var i = objects.length - 1; i >= 0; i--) {
             var o = objects[i];
             o.y += speed;
@@ -470,4 +462,12 @@
             ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 5;
             ctx.strokeText('⚡ SPEED UP! ⚡', 200, 260); ctx.fillText('⚡ SPEED UP! ⚡', 200, 260);
         }
-        if (i
+        if (isPlaying) requestAnimationFrame(gameLoop);
+    }
+
+    // イベントリスナーの安全な割り当て
+    D.getElementById('startBtn').addEventListener('click', startGame);
+    D.getElementById('restartBtn').addEventListener('click', startGame);
+    D.getElementById('bgmToggleBtn').addEventListener('click', toggleBGM);
+    D.getElementById('leftBtn').addEventListener('click', function() { moveLane(-1); });
+    D.getElementById('jumpBtn').addEventListener('click
