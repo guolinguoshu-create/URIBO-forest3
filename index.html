@@ -226,9 +226,10 @@
             this.init();
         }
         init() {
+            if (!this.canvas) return;
             this.canvas.width = 400;
             this.canvas.height = 700;
-            for(let i=0; i<40; i++) {
+            for(let i=0; i<30; i++) {
                 this.particles.push({
                     x: Math.random() * this.canvas.width,
                     y: Math.random() * this.canvas.height,
@@ -240,6 +241,7 @@
             }
         }
         updateAndDraw() {
+            if (!this.ctx) return;
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.particles.forEach(p => {
                 p.y += p.speedY;
@@ -257,8 +259,10 @@
     const resultParticles = new ParticleSystem('result-particles');
 
     function runParticleLoops() {
-        startParticles.updateAndDraw();
-        resultParticles.updateAndDraw();
+        try {
+            startParticles.updateAndDraw();
+            resultParticles.updateAndDraw();
+        } catch(e) {}
         requestAnimationFrame(runParticleLoops);
     }
     runParticleLoops();
@@ -286,6 +290,8 @@
             tCanvas.height = imgObj.naturalHeight;
             const tCtx = tCanvas.getContext('2d');
             tCtx.drawImage(imgObj, 0, 0);
+            
+            // サーバー環境によってはここでセキュリティブロックがかかるため、エラー時は元の画像を返す
             const imgData = tCtx.getImageData(0, 0, tCanvas.width, tCanvas.height);
             const data = imgData.data;
             
@@ -305,6 +311,7 @@
             tCtx.putImageData(imgData, 0, 0);
             return tCanvas;
         } catch(e) {
+            // 透明化に失敗した場合は、そのままの画像を使用する（ゲームが止まるのを防ぐ）
             return imgObj;
         }
     }
@@ -313,7 +320,7 @@
         let loadedCount = 0;
         IMAGE_CANDIDATES.forEach(filename => {
             const img = new Image();
-            img.crossOrigin = "Anonymous";
+            // ★ブロックの元凶だったセキュリティ設定(crossOrigin)を削除しました！
             img.onload = () => { loadedImages[filename] = img; checkDone(); };
             img.onerror = () => { checkDone(); };
             img.src = filename;
@@ -326,20 +333,24 @@
     }
 
     function applyLoadedImages() {
-        const startImg = loadedImages['1788702691552.png'] || loadedImages['title.png'];
-        if (startImg) document.getElementById('start-screen').style.backgroundImage = `url('${startImg.src}')`;
-        
-        const resultImg = loadedImages['1788793217973.png'] || loadedImages['result.png'];
-        if (resultImg) document.getElementById('result-screen').style.backgroundImage = `url('${resultImg.src}')`;
+        try {
+            const startImg = loadedImages['1788702691552.png'] || loadedImages['title.png'];
+            if (startImg) document.getElementById('start-screen').style.backgroundImage = `url('${startImg.src}')`;
+            
+            const resultImg = loadedImages['1788793217973.png'] || loadedImages['result.png'];
+            if (resultImg) document.getElementById('result-screen').style.backgroundImage = `url('${resultImg.src}')`;
 
-        const rawPlayer = loadedImages['1788793264451.png'] || loadedImages['player.png'];
-        if (rawPlayer && rawPlayer.complete && rawPlayer.naturalWidth !== 0) {
-            playerImgObj = makeTransparent(rawPlayer, true);
-        }
+            const rawPlayer = loadedImages['1788793264451.png'] || loadedImages['player.png'];
+            if (rawPlayer && rawPlayer.complete && rawPlayer.naturalWidth !== 0) {
+                playerImgObj = makeTransparent(rawPlayer, true);
+            }
 
-        const rawAcorn = loadedImages['image.png'] || loadedImages['acorn.png'];
-        if (rawAcorn && rawAcorn.complete && rawAcorn.naturalWidth !== 0) {
-            acornImgObj = makeTransparent(rawAcorn, false);
+            const rawAcorn = loadedImages['image.png'] || loadedImages['acorn.png'];
+            if (rawAcorn && rawAcorn.complete && rawAcorn.naturalWidth !== 0) {
+                acornImgObj = makeTransparent(rawAcorn, false);
+            }
+        } catch (e) {
+            console.error("画像適用エラー:", e);
         }
     }
     initImages();
@@ -380,17 +391,18 @@
 
         startBGM() {
             if (this.bgmTimer) return;
-            // 緊迫感のあるチェイス風BGM（マイナーコードのアルペジオ）
             const notes = [220, 261.63, 329.63, 392.00, 329.63, 261.63]; 
             this.step = 0;
             this.bgmTimer = setInterval(() => {
-                if (this.muted) return;
-                const freq = notes[this.step % notes.length];
-                this.playTone(freq, 'sawtooth', 0.12, 0.04);
-                if (this.step % 2 === 0) {
-                    this.playTone(110, 'triangle', 0.2, 0.06); // 低音ベース
-                }
-                this.step++;
+                try {
+                    if (this.muted) return;
+                    const freq = notes[this.step % notes.length];
+                    this.playTone(freq, 'sawtooth', 0.12, 0.04);
+                    if (this.step % 2 === 0) {
+                        this.playTone(110, 'triangle', 0.2, 0.06); // 低音ベース
+                    }
+                    this.step++;
+                } catch(e) {}
             }, 140);
         }
         stopBGM() {
@@ -431,7 +443,7 @@
     let isJumping = false; let jumpOffsetY = 0; let jumpVelocity = 0;
     const gravity = 0.85;
     let objects = []; let speed = 7; let spawnTimer = 0; let bgOffset = 0;
-    let sirenFlash = 0; // パトランプ点滅用
+    let sirenFlash = 0; 
 
     document.getElementById('btn-left').addEventListener('click', () => moveLane(-1));
     document.getElementById('btn-right').addEventListener('click', () => moveLane(1));
@@ -472,7 +484,7 @@
             if (jumpOffsetY >= 0) { jumpOffsetY = 0; isJumping = false; }
         }
         bgOffset = (bgOffset + speed) % 50;
-        sirenFlash = (sirenFlash + 0.15) % (Math.PI * 2); // パトランプ点滅用サイクル
+        sirenFlash = (sirenFlash + 0.15) % (Math.PI * 2); 
 
         spawnTimer++;
         if (spawnTimer > 28) { spawnObject(); spawnTimer = 0; speed += 0.003; }
@@ -487,7 +499,6 @@
                     score += 10; document.getElementById('score').textContent = score;
                     sound.playCoin(); objects.splice(i, 1); continue;
                 } else {
-                    // オフィス家具にぶつかった場合
                     if (jumpOffsetY > -25) { endGame(); return; }
                 }
             }
@@ -498,22 +509,20 @@
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // ① 明るめにした森＆道路の背景描画
-        ctx.fillStyle = '#3a4f32'; ctx.fillRect(0, 0, canvas.width, canvas.height); // 明るい森林地帯
-        ctx.fillStyle = '#6b533d'; ctx.fillRect(40, 0, 320, canvas.height); // 明るい茶色の道路
+        // 背景
+        ctx.fillStyle = '#3a4f32'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#6b533d'; ctx.fillRect(40, 0, 320, canvas.height);
         
-        // 両サイドの森の木陰模様
         ctx.fillStyle = '#263520';
         ctx.fillRect(0, 0, 40, canvas.height);
         ctx.fillRect(360, 0, 40, canvas.height);
 
-        // 道路の中央線（白線）
         ctx.strokeStyle = '#d2b48c'; ctx.setLineDash([25, 25]);
         ctx.lineDashOffset = -bgOffset; ctx.lineWidth = 4; ctx.beginPath();
         ctx.moveTo(146, 0); ctx.lineTo(146, canvas.height);
         ctx.moveTo(254, 0); ctx.lineTo(254, canvas.height); ctx.stroke(); ctx.setLineDash([]);
 
-        // ② 警察の追跡を表現する「パトランプの光（赤と青のサイレン点滅演出）」
+        // パトランプ演出
         const redAlpha = (Math.sin(sirenFlash) + 1) * 0.15;
         const blueAlpha = (Math.cos(sirenFlash) + 1) * 0.15;
         ctx.fillStyle = `rgba(255, 0, 0, ${redAlpha})`;
@@ -521,9 +530,4 @@
         ctx.fillStyle = `rgba(0, 100, 255, ${blueAlpha})`;
         ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
 
-        // ③ オブジェクト（ドングリ ＆ オフィス家具）の描画
-        objects.forEach(obj => {
-            if (obj.type === 'acorn') {
-                if (acornImgObj && acornImgObj.width) {
-                    const aspect = acornImgObj.width / acornImgObj.height;
-                    let drawW
+        // オブジェク
