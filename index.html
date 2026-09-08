@@ -16,7 +16,6 @@
             box-shadow: 0 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden;
         }
         
-        /* トップ画面 */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -34,7 +33,6 @@
         }
         .massive-btn:active { transform: scale(0.95); background: #ff8800; }
 
-        /* スコアバー */
         #top-bar {
             position: absolute; top: 12px; left: 12px; right: 12px; height: 42px;
             background: rgba(0, 0, 0, 0.8); border: 2px solid #ffd700; border-radius: 10px;
@@ -44,7 +42,6 @@
         
         canvas { width: 100%; height: 100%; display: block; z-index: 10; }
 
-        /* 操作ボタン */
         #controls {
             position: absolute; bottom: 20px; left: 10px; right: 10px; display: none;
             justify-content: space-between; gap: 8px; z-index: 40;
@@ -56,7 +53,6 @@
         }
         .ctrl-btn:active { background: #5c3a17; transform: translateY(2px); }
 
-        /* 結果画面 */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -70,14 +66,13 @@
             position: relative; border: 3px solid #ffd700; border-radius: 18px;
             padding: 24px 16px; width: 90%; text-align: center; color: #ffffff; margin-bottom: 40px; z-index: 2;
         }
-
         #version-tag { position: absolute; top: 60px; left: 12px; color: #fff; font-size: 12px; z-index: 99; opacity: 0.5; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v8 AUTO-TRANSPARENT</div>
+    <div id="version-tag">v9 FIXED & BGM</div>
 
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
@@ -123,7 +118,7 @@
     var lanes = [100, 200, 300];
     var currentLane = 1;
     var playerX = 200;
-    var playerY = 520;
+    var playerY = 480; // ウリボを大きくしたため少し上に調整
     var targetX = 200;
     var isJumping = false;
     var jumpY = 0;
@@ -131,11 +126,54 @@
     var objects = [];
     var speed = 7;
     var bgY = 0;
-    var siren = 0;
 
-    // ==========================================
-    // 魔法の処理：画像の白い背景をプログラムで完全に透明にする関数
-    // ==========================================
+    // Web Audio API BGM システム
+    var audioCtx = null;
+    var bgmTimer = null;
+    function initBGM() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        if (bgmTimer) clearInterval(bgmTimer);
+        
+        // 楽しげなチップチューン風のBGMループ
+        var notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+        var bassNotes = [130.81, 164.81, 196.00, 164.81];
+        var step = 0;
+        
+        bgmTimer = setInterval(function() {
+            if (!isPlaying) return;
+            try {
+                // メロディ
+                var osc = audioCtx.createOscillator();
+                var gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = notes[step % notes.length];
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+
+                // ベース
+                if (step % 2 === 0) {
+                    var bass = audioCtx.createOscillator();
+                    var bGain = audioCtx.createGain();
+                    bass.type = 'sawtooth';
+                    bass.frequency.value = bassNotes[(step / 2) % bassNotes.length];
+                    bGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    bGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                    bass.connect(bGain); bGain.connect(audioCtx.destination);
+                    bass.start(); bass.stop(audioCtx.currentTime + 0.3);
+                }
+                step++;
+            } catch(e) {}
+        }, 250);
+    }
+
+    // 画像の白背景・チェッカーボード背景を完全に透明にする強力な関数（CORS対応）
     function makeTransparent(img, callback) {
         var tempC = document.createElement('canvas');
         tempC.width = img.width;
@@ -148,8 +186,8 @@
             var data = imgData.data;
             for (var i = 0; i < data.length; i += 4) {
                 var r = data[i], g = data[i+1], b = data[i+2];
-                // 白に近い部分を透明（Alpha = 0）にする
-                if (r > 200 && g > 200 && b > 200) {
+                // 白、および周囲のグレー（チェッカーボードの格子柄含む）を完全に透明にする
+                if ((r > 190 && g > 190 && b > 190) || (Math.abs(r - g) < 15 && Math.abs(g - b) < 15 && r > 160)) {
                     data[i+3] = 0; 
                 }
             }
@@ -158,24 +196,25 @@
             newImg.onload = function() { callback(newImg); };
             newImg.src = tempC.toDataURL();
         } catch(e) {
-            callback(img); // エラー時はそのまま
+            callback(img);
         }
     }
 
     var cleanPlayerImg = null;
     var cleanAcornImg = null;
 
-    // 画像読み込みと自動白抜き処理
     var imgTitle = new Image(); imgTitle.src = '1788702691552.png';
     var imgResult = new Image(); imgResult.src = '1788793217973.png';
     
     var imgPlayer = new Image();
+    imgPlayer.crossOrigin = 'anonymous';
     imgPlayer.src = '1788793264451.png';
     imgPlayer.onload = function() {
         makeTransparent(imgPlayer, function(res) { cleanPlayerImg = res; });
     };
 
     var imgAcorn = new Image();
+    imgAcorn.crossOrigin = 'anonymous';
     imgAcorn.src = 'image.png';
     imgAcorn.onload = function() {
         makeTransparent(imgAcorn, function(res) { cleanAcornImg = res; });
@@ -206,6 +245,8 @@
         objects = [];
         D.getElementById('score').innerText = score;
 
+        initBGM();
+
         if (!loopRunning) {
             loopRunning = true;
             requestAnimationFrame(gameLoop);
@@ -232,6 +273,7 @@
     function endGame() {
         isPlaying = false;
         loopRunning = false;
+        if (bgmTimer) clearInterval(bgmTimer);
 
         if (score > highScore) {
             highScore = score;
@@ -258,30 +300,36 @@
             if (jumpY >= 0) { jumpY = 0; isJumping = false; }
         }
 
-        bgY = (bgY + speed) % 50;
-        siren = (siren + 0.1) % 6.28;
+        bgY = (bgY + speed) % 60;
 
         timer++;
-        if (timer > 25) {
+        if (timer > 22) {
             var lane = Math.floor(Math.random() * 3);
-            var isEnemy = Math.random() < 0.4;
-            objects.push({ x: lanes[lane], y: -50, enemy: isEnemy });
+            var isEnemy = Math.random() < 0.45;
+            objects.push({ x: lanes[lane], y: -60, enemy: isEnemy });
             timer = 0;
             speed += 0.005;
         }
 
-        // 描画：プレイ画面の背景（森の道路風）
-        ctx.fillStyle = '#3a4f32'; ctx.fillRect(0, 0, 400, 700);
-        ctx.fillStyle = '#6b533d'; ctx.fillRect(40, 0, 320, 700);
-        ctx.fillStyle = '#263520'; ctx.fillRect(0, 0, 40, 700); ctx.fillRect(360, 0, 40, 700);
-        
-        ctx.strokeStyle = '#d2b48c'; ctx.lineWidth = 4; ctx.setLineDash([25, 25]); ctx.lineDashOffset = -bgY;
-        ctx.beginPath(); ctx.moveTo(146, 0); ctx.lineTo(146, 700); ctx.moveTo(254, 0); ctx.lineTo(254, 700); ctx.stroke();
+        // --- 描画処理 ---
+        // 背景：中央は道路、両端は森
+        ctx.fillStyle = '#22381d'; ctx.fillRect(0, 0, 400, 700); // 森のベース
+        ctx.fillStyle = '#4a3b2c'; ctx.fillRect(50, 0, 300, 700); // 道路
+
+        // 道路の中央線
+        ctx.strokeStyle = '#e6ccb2'; ctx.lineWidth = 4; ctx.setLineDash([25, 25]); ctx.lineDashOffset = -bgY;
+        ctx.beginPath(); ctx.moveTo(150, 0); ctx.lineTo(150, 700); ctx.moveTo(250, 0); ctx.lineTo(250, 700); ctx.stroke();
         ctx.setLineDash([]);
 
-        // サイレン演出
-        ctx.fillStyle = "rgba(255, 0, 0, " + ((Math.sin(siren) + 1) * 0.15) + ")"; ctx.fillRect(0, 0, 400, 350);
-        ctx.fillStyle = "rgba(0, 100, 255, " + ((Math.cos(siren) + 1) * 0.15) + ")"; ctx.fillRect(0, 350, 400, 350);
+        // ★ 両端に警官を配置（森のサイドで監視中）
+        ctx.font = '28px sans-serif';
+        ctx.textAlign = 'center';
+        var copAnimY = (bgY % 40) - 20;
+        for (var cy = -50; cy < 750; cy += 120) {
+            var curY = cy + copAnimY;
+            ctx.fillText('👮‍♂️', 25, curY);
+            ctx.fillText('👮‍♀️', 375, curY);
+        }
 
         // オブジェクト処理
         for (var i = objects.length - 1; i >= 0; i--) {
@@ -291,9 +339,9 @@
             var dx = Math.abs(playerX - o.x);
             var dy = Math.abs((playerY + jumpY) - o.y);
             
-            if (dx < 35 && dy < 45) {
+            if (dx < 38 && dy < 45) {
                 if (o.enemy) {
-                    if (jumpY > -20) { endGame(); return; }
+                    if (jumpY > -25) { endGame(); return; }
                 } else {
                     score += 10;
                     D.getElementById('score').innerText = score;
@@ -303,27 +351,33 @@
             }
 
             if (o.enemy) {
-                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(o.x - 26, o.y - 14, 52, 28);
-                ctx.fillStyle = '#a06532'; ctx.fillRect(o.x - 22, o.y - 10, 44, 20);
+                // 醜いオフィス家具ではなく、見栄えの良い「警察のバリケード（フェンス）」を描画
+                ctx.fillStyle = '#cc2222'; ctx.fillRect(o.x - 32, o.y - 12, 64, 24);
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(o.x - 28, o.y - 8, 56, 16);
+                ctx.fillStyle = '#cc2222';
+                ctx.fillRect(o.x - 20, o.y - 8, 10, 16);
+                ctx.fillRect(o.x + 10, o.y - 8, 10, 16);
+                // 支柱
+                ctx.fillStyle = '#444'; ctx.fillRect(o.x - 28, o.y - 18, 6, 36); ctx.fillRect(o.x + 22, o.y - 18, 6, 36);
             } else {
-                // 自動白抜きされたドングリを描画
+                // 完全透過された綺麗なドングリ
                 var drawAcornImg = cleanAcornImg || imgAcorn;
-                ctx.drawImage(drawAcornImg, o.x - 30, o.y - 30, 60, 60);
+                ctx.drawImage(drawAcornImg, o.x - 28, o.y - 28, 56, 56);
             }
 
-            if (o.y > 750) objects.splice(i, 1);
+            if (o.y > 780) objects.splice(i, 1);
         }
 
-        // プレイヤー描画
+        // プレイヤー（ウリボ ＆ おばあちゃん）のサイズ感を大きく修正（130x130）
         var py = playerY + jumpY;
-        ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 30, 10, 0, 0, 6.28); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 55, 38, 12, 0, 0, 6.28); ctx.fill();
 
-        // 自動白抜きされたキャラクターを描画
         var drawPlayerImg = cleanPlayerImg || imgPlayer;
-        ctx.drawImage(drawPlayerImg, playerX - 45, py - 60, 90, 90);
+        ctx.drawImage(drawPlayerImg, playerX - 65, py - 75, 130, 130);
 
         if (isPlaying) requestAnimationFrame(gameLoop);
     }
 </script>
 </body>
 </html>
+
