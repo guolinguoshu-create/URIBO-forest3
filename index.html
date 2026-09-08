@@ -15,21 +15,21 @@
             background: #223322; box-shadow: 0 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden;
         }
         
-        /* スタート画面（元の美しい画像背景を完全復活） */
+        /* スタート画面 */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #223322;
             background-image: url('1788702691552.png');
             background-size: cover; background-position: center;
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 90px; z-index: 999; pointer-events: auto;
+            padding-bottom: 90px; z-index: 9999;
         }
         .massive-btn {
             width: 85%; padding: 18px; background: linear-gradient(180deg, #ffe600, #ff8800);
             border: 3px solid #ffffff; border-radius: 40px; color: #1a0000; font-size: 22px; font-weight: bold;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 1000; cursor: pointer; text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 10000; cursor: pointer; text-align: center;
             text-shadow: 0 1px 0 rgba(255,255,255,0.6); outline: none; -webkit-tap-highlight-color: transparent;
-            font-family: inherit; pointer-events: auto;
+            font-family: inherit;
         }
         .massive-btn:active { transform: scale(0.96); filter: brightness(0.9); }
 
@@ -71,14 +71,14 @@
         }
         .ctrl-btn:active { background: #5c3818; transform: translateY(2px); }
 
-        /* 結果発表画面（元の画像背景を完全復活） */
+        /* 結果発表画面 */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #223322;
             background-image: url('1788793217973.png');
             background-size: cover; background-position: center;
             display: none; flex-direction: column; justify-content: flex-start; align-items: center;
-            padding-top: 45px; z-index: 999;
+            padding-top: 45px; z-index: 9999;
         }
         #result-screen::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -89,21 +89,22 @@
             padding: 18px 16px; width: 88%; text-align: center; color: #ffffff; margin-bottom: 20px; z-index: 2;
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(3px);
         }
-        #version-tag { position: absolute; top: 60px; left: 14px; color: #ffd700; font-size: 11px; z-index: 999; opacity: 0.9; font-weight: bold; }
+        #version-tag { position: absolute; top: 60px; left: 14px; color: #ffd700; font-size: 11px; z-index: 9999; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v25 PERFECT RESTORE</div>
+    <div id="version-tag">v26 DIRECT ONCLICK</div>
 
+    <!-- スタート画面：onclickを直接埋め込み -->
     <div id="start-screen">
-        <button class="massive-btn" id="startBtn">ゲームスタート！</button>
+        <button class="massive-btn" onclick="startGameForce()">ゲームスタート！</button>
     </div>
 
     <div id="top-bar">
         <div>黄金ドングリ回収作戦</div>
-        <button id="bgmToggleBtn" class="bgm-btn active">🎵 BGM: ON</button>
+        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM()">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -114,11 +115,12 @@
     </div>
 
     <div id="controls">
-        <button class="ctrl-btn" id="leftBtn">◀ 左</button>
-        <button class="ctrl-btn" id="jumpBtn">▲ ジャンプ</button>
-        <button class="ctrl-btn" id="rightBtn">右 ▶</button>
+        <button class="ctrl-btn" onclick="moveLane(-1)">◀ 左</button>
+        <button class="ctrl-btn" onclick="jumpAction()">▲ ジャンプ</button>
+        <button class="ctrl-btn" onclick="moveLane(1)">右 ▶</button>
     </div>
 
+    <!-- 結果画面：onclickを直接埋め込み -->
     <div id="result-screen">
         <div class="result-board">
             <div style="font-size: 22px; color: #ffd700; font-weight: bold; text-shadow: 1px 1px 3px #000;">🏆 結果発表 🏆</div>
@@ -126,7 +128,7 @@
             <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
             <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <button class="massive-btn" id="restartBtn" style="position:relative; z-index:1000; width:88%;">もう一度走る！</button>
+        <button class="massive-btn" onclick="startGameForce()" style="position:relative; z-index:10000; width:88%;">もう一度走る！</button>
     </div>
 </div>
 
@@ -141,7 +143,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v25') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v26') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -165,8 +167,8 @@
     function safeInitAudio() {
         try {
             if (!audioCtx) {
-                var AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                if (AudioContextClass) audioCtx = new AudioContextClass();
+                var AC = window.AudioContext || window.webkitAudioContext;
+                if (AC) audioCtx = new AC();
             }
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
@@ -280,16 +282,11 @@
         }
     }
 
-    // 元の画像ファイルの読み込み
     var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
     var imgAcorn = new Image(); imgAcorn.src = 'image.png';
 
-    function startGame(e) {
-        if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
+    // 強制スタート関数（HTMLから直接呼び出し）
+    window.startGameForce = function() {
         safeInitAudio();
 
         var startScreen = D.getElementById('start-screen');
@@ -318,7 +315,7 @@
         }
     }
 
-    function moveLane(dir) {
+    window.moveLane = function(dir) {
         if (!isPlaying) return;
         currentLane += dir;
         if (currentLane < 0) currentLane = 0;
@@ -326,7 +323,7 @@
         targetX = lanes[currentLane];
     }
 
-    function jumpAction() {
+    window.jumpAction = function() {
         if (isPlaying && !isJumping) {
             isJumping = true;
             jumpV = -16;
@@ -342,7 +339,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v25', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v26', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -471,7 +468,6 @@
         }
         if (isPlaying) requestAnimationFrame(gameLoop);
     }
-
-    // タップ＆クリックで確実に画面が切り替わるようにイベント設定
-    var startBtn = D.getElementById('startBtn');
-    var restartBtn = D.getElem
+</script>
+</body>
+</html>
