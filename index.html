@@ -7,12 +7,12 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
         body {
-            background-color: #1a261a; display: flex; justify-content: center; align-items: center;
+            background-color: #111a11; display: flex; justify-content: center; align-items: center;
             min-height: 100vh; font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden;
         }
         #game-container {
             position: relative; width: 100vw; max-width: 420px; height: 100vh; max-height: 800px;
-            background: #2b3a28; box-shadow: 0 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden;
+            background: #223322; box-shadow: 0 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden;
         }
         
         /* スタート画面 */
@@ -27,63 +27,72 @@
             text-shadow: 3px 3px 0 #000, 0 0 15px rgba(255,215,0,0.6); text-align: center; width: 100%; z-index: 51;
         }
         .massive-btn {
-            width: 85%; padding: 18px; background: linear-gradient(180deg, #ffe600, #ff8800);
+            width: 85%; padding: 16px; background: linear-gradient(180deg, #ffe600, #ff8800);
             border: 3px solid #ffffff; border-radius: 40px; color: #1a0000; font-size: 22px; font-weight: bold;
             box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 60; cursor: pointer; text-align: center;
             text-shadow: 0 1px 0 rgba(255,255,255,0.6);
         }
         .massive-btn:active { transform: scale(0.96); filter: brightness(0.9); }
 
-        /* トップバー & BGMボタン */
+        /* トップバー */
         #top-bar {
-            position: absolute; top: 12px; left: 12px; right: 12px; height: 46px;
-            background: rgba(20, 35, 20, 0.9); border: 2px solid #ffd700; border-radius: 12px;
+            position: absolute; top: 12px; left: 12px; right: 12px; height: 40px;
+            background: rgba(20, 35, 20, 0.85); border: 2px solid #ffd700; border-radius: 12px;
             display: flex; justify-content: space-between; align-items: center; padding: 0 12px;
-            color: #ffffff; font-size: 14px; font-weight: bold; z-index: 20;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            color: #ffffff; font-size: 13px; font-weight: bold; z-index: 20;
         }
         .bgm-btn {
             background: linear-gradient(180deg, #444, #222); border: 1.5px solid #ffd700; color: #ffd700;
-            padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;
+            padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;
         }
         .bgm-btn.active { background: linear-gradient(180deg, #ff8800, #cc5500); color: #fff; }
 
         canvas { width: 100%; height: 100%; display: block; z-index: 10; }
 
+        /* キャラクターと操作ボタンの間に配置するスコアエリア */
+        #mid-score-board {
+            position: absolute; bottom: 88px; left: 12px; right: 12px;
+            background: rgba(15, 25, 15, 0.85); border: 2px solid #ffd700; border-radius: 14px;
+            display: none; justify-content: space-around; align-items: center; padding: 8px 0;
+            color: #ffffff; font-size: 15px; font-weight: bold; z-index: 40;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
         /* 操作ボタン */
         #controls {
-            position: absolute; bottom: 20px; left: 12px; right: 12px; display: none;
-            justify-content: space-between; gap: 10px; z-index: 40;
+            position: absolute; bottom: 18px; left: 12px; right: 12px; display: none;
+            justify-content: space-between; gap: 8px; z-index: 40;
         }
         .ctrl-btn {
-            flex: 1; padding: 18px 0; background: linear-gradient(180deg, #a06836, #5c3818);
-            border: 2px solid #ffd700; border-radius: 20px; color: #ffffff; font-weight: bold;
-            font-size: 16px; text-align: center; box-shadow: 0 6px 15px rgba(0,0,0,0.5);
+            flex: 1; padding: 14px 0; background: linear-gradient(180deg, #a06836, #5c3818);
+            border: 2px solid #ffd700; border-radius: 16px; color: #ffffff; font-weight: bold;
+            font-size: 15px; text-align: center; box-shadow: 0 5px 12px rgba(0,0,0,0.5);
         }
         .ctrl-btn:active { background: #5c3818; transform: translateY(2px); }
 
-        /* 結果発表画面（背景画像がはっきり透けるように修正） */
+        /* 結果発表画面（上寄せ配置） */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
-            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 50;
+            display: none; flex-direction: column; justify-content: flex-start; align-items: center;
+            padding-top: 45px; z-index: 50;
         }
         #result-screen::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.35); z-index: 1; /* 背景がしっかり見えるよう薄く調整 */
+            background: rgba(0, 0, 0, 0.25); z-index: 1;
         }
         .result-board {
-            position: relative; background: rgba(20, 30, 20, 0.88); border: 3px solid #ffd700; border-radius: 20px;
-            padding: 24px 16px; width: 88%; text-align: center; color: #ffffff; margin-bottom: 30px; z-index: 2;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(2px);
+            position: relative; background: rgba(20, 30, 20, 0.92); border: 3px solid #ffd700; border-radius: 20px;
+            padding: 18px 16px; width: 88%; text-align: center; color: #ffffff; margin-bottom: 20px; z-index: 2;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(3px);
         }
-        #version-tag { position: absolute; top: 68px; left: 14px; color: #ffd700; font-size: 11px; z-index: 99; opacity: 0.8; font-weight: bold; }
+        #version-tag { position: absolute; top: 60px; left: 14px; color: #ffd700; font-size: 11px; z-index: 99; opacity: 0.8; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v11 BRIGHT & FIXED</div>
+    <div id="version-tag">v13 AUDIO ENHANCED</div>
 
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
@@ -91,12 +100,16 @@
     </div>
 
     <div id="top-bar">
-        <div>ドングリ: <span id="score" style="color:#ffd700; font-size:16px;">0</span></div>
-        <div>最高: <span id="high-score" style="color:#fff;">0</span></div>
+        <div>黄金ドングリ回収作戦</div>
         <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM(event)">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
+
+    <div id="mid-score-board">
+        <div>ドングリ: <span id="score" style="color:#ffd700; font-size:20px;">0</span></div>
+        <div>最高記録: <span id="high-score" style="color:#ffffff; font-size:18px;">0</span></div>
+    </div>
 
     <div id="controls">
         <div class="ctrl-btn" onclick="moveLane(-1, event)" ontouchstart="moveLane(-1, event)">◀ 左</div>
@@ -106,10 +119,10 @@
 
     <div id="result-screen">
         <div class="result-board">
-            <div style="font-size: 24px; color: #ffd700; font-weight: bold; text-shadow: 1px 1px 3px #000;">結果発表</div>
-            <p style="margin-top:12px; font-size:16px;">押収ドングリ: <span id="res-score" style="font-size:32px; color:#ffd700; font-weight:bold;">0</span> 個</p>
-            <div id="res-rank" style="font-size: 56px; color: #ff3333; font-weight: bold; margin: 5px 0; text-shadow: 2px 2px 0 #000;">S</div>
-            <p style="font-size: 13px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 6px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
+            <div style="font-size: 22px; color: #ffd700; font-weight: bold; text-shadow: 1px 1px 3px #000;">🏆 結果発表 🏆</div>
+            <p style="margin-top:8px; font-size:15px;">押収ドングリ: <span id="res-score" style="font-size:30px; color:#ffd700; font-weight:bold;">0</span> 個</p>
+            <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
+            <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
         <div class="massive-btn" onclick="startGame(event)" ontouchstart="startGame(event)" style="position:relative; z-index:2; width:88%;">もう一度走る！</div>
     </div>
@@ -124,36 +137,66 @@
     var isPlaying = false;
     var loopRunning = false;
     var score = 0;
-    var highScore = localStorage.getItem('acorn_highscore_v11') || 0;
+    var highScore = localStorage.getItem('acorn_highscore_v13') || 0;
     D.getElementById('high-score').innerText = highScore;
 
     var lanes = [100, 200, 300];
     var currentLane = 1;
     var playerX = 200;
-    var playerY = 470;
+    var playerY = 410;
     var targetX = 200;
     var isJumping = false;
     var jumpY = 0;
     var jumpV = 0;
     var objects = [];
-    var speed = 7;
+    var speed = 7.5;
     var bgY = 0;
     var isBgmOn = true;
+    var speedUpNotifyTimer = 0;
 
-    // Web Audio API BGM
+    // Web Audio API システム
     var audioCtx = null;
     var bgmTimer = null;
-    function initBGM() {
+    var resultBgmTimer = null;
+
+    function ensureAudioContext() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
+    }
+
+    // 1. 障害物衝突サウンド (クラッシュ効果音)
+    function playHitSE() {
+        if (!isBgmOn) return;
+        ensureAudioContext();
+        try {
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            
+            // ピッチ急降下による衝突インパクト音
+            osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
+            
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+            
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+        } catch(e) {}
+    }
+
+    // 2. 走行中BGM (高速・疾走感)
+    function initBGM() {
+        ensureAudioContext();
         if (bgmTimer) clearInterval(bgmTimer);
+        if (resultBgmTimer) clearInterval(resultBgmTimer);
         
-        var notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 440.00, 349.23];
-        var bassNotes = [130.81, 164.81, 196.00, 174.61];
+        var notes = [329.63, 392.00, 440.00, 523.25, 587.33, 523.25, 440.00, 392.00, 440.00, 523.25, 659.25, 587.33];
+        var bassNotes = [164.81, 164.81, 220.00, 220.00, 174.61, 174.61, 196.00, 196.00];
         var step = 0;
         
         bgmTimer = setInterval(function() {
@@ -161,26 +204,57 @@
             try {
                 var osc = audioCtx.createOscillator();
                 var gain = audioCtx.createGain();
-                osc.type = 'triangle';
+                osc.type = 'sawtooth';
                 osc.frequency.value = notes[step % notes.length];
-                gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
                 osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.22);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.12);
 
-                if (step % 2 === 0) {
-                    var bass = audioCtx.createOscillator();
-                    var bGain = audioCtx.createGain();
-                    bass.type = 'sawtooth';
-                    bass.frequency.value = bassNotes[(step / 2) % bassNotes.length];
-                    bGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-                    bGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-                    bass.connect(bGain); bGain.connect(audioCtx.destination);
-                    bass.start(); bass.stop(audioCtx.currentTime + 0.3);
+                var bass = audioCtx.createOscillator();
+                var bGain = audioCtx.createGain();
+                bass.type = 'triangle';
+                bass.frequency.value = bassNotes[step % bassNotes.length];
+                bGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                bGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.13);
+                bass.connect(bGain); bGain.connect(audioCtx.destination);
+                bass.start(); bass.stop(audioCtx.currentTime + 0.13);
+                
+                step++;
+            } catch(e) {}
+        }, 135);
+    }
+
+    // 3. 結果発表表彰ファンファーレBGM
+    function initResultBGM() {
+        ensureAudioContext();
+        if (bgmTimer) clearInterval(bgmTimer);
+        if (resultBgmTimer) clearInterval(resultBgmTimer);
+
+        // 華やかで明るい表彰式メロディ
+        var fanfareMelody = [
+            523.25, 523.25, 523.25, 659.25, 783.99, 0, 659.25, 783.99, 1046.50, 0, 0, 0,
+            698.46, 698.46, 698.46, 880.00, 1046.50, 0, 880.00, 1046.50, 1174.66, 0, 0, 0
+        ];
+        var step = 0;
+
+        resultBgmTimer = setInterval(function() {
+            if (isPlaying || !isBgmOn) return;
+            try {
+                var freq = fanfareMelody[step % fanfareMelody.length];
+                if (freq > 0) {
+                    var osc = audioCtx.createOscillator();
+                    var gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.22);
                 }
                 step++;
             } catch(e) {}
-        }, 240);
+        }, 160);
     }
 
     function toggleBGM(e) {
@@ -191,17 +265,16 @@
             btn.innerText = "🎵 BGM: ON";
             btn.className = "bgm-btn active";
             if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            if (!isPlaying) initResultBGM();
         } else {
             btn.innerText = "🔇 BGM: OFF";
             btn.className = "bgm-btn";
         }
     }
 
-    // 画像透過処理
     function makeTransparent(img, callback) {
         var tempC = document.createElement('canvas');
-        tempC.width = img.width;
-        tempC.height = img.height;
+        tempC.width = img.width; tempC.height = img.height;
         var tempCtx = tempC.getContext('2d');
         tempCtx.drawImage(img, 0, 0);
         
@@ -218,9 +291,7 @@
             var newImg = new Image();
             newImg.onload = function() { callback(newImg); };
             newImg.src = tempC.toDataURL();
-        } catch(e) {
-            callback(img);
-        }
+        } catch(e) { callback(img); }
     }
 
     var cleanPlayerImg = null;
@@ -258,10 +329,12 @@
         D.getElementById('start-screen').style.display = 'none';
         D.getElementById('result-screen').style.display = 'none';
         D.getElementById('controls').style.display = 'flex';
+        D.getElementById('mid-score-board').style.display = 'flex';
 
         isPlaying = true;
         score = 0;
-        speed = 7;
+        speed = 7.5;
+        speedUpNotifyTimer = 0;
         currentLane = 1;
         targetX = lanes[currentLane];
         playerX = targetX;
@@ -289,18 +362,19 @@
         if (e) e.preventDefault();
         if (isPlaying && !isJumping) {
             isJumping = true;
-            jumpV = -15;
+            jumpV = -16;
         }
     }
 
     function endGame() {
         isPlaying = false;
         loopRunning = false;
-        if (bgmTimer) clearInterval(bgmTimer);
+        
+        playHitSE(); // 衝突効果音再生
 
         if (score > highScore) {
             highScore = score;
-            localStorage.setItem('acorn_highscore_v11', highScore);
+            localStorage.setItem('acorn_highscore_v13', highScore);
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -309,54 +383,65 @@
         D.getElementById('res-rank').innerText = rank;
 
         D.getElementById('controls').style.display = 'none';
+        D.getElementById('mid-score-board').style.display = 'none';
         D.getElementById('result-screen').style.display = 'flex';
+
+        // 100ms後に表彰BGM開始
+        setTimeout(function() {
+            initResultBGM();
+        }, 100);
     }
 
     var timer = 0;
+    var speedCounter = 0;
     function gameLoop() {
         if (!isPlaying) return;
 
-        playerX += (targetX - playerX) * 0.3;
+        playerX += (targetX - playerX) * 0.35;
         if (isJumping) {
             jumpY += jumpV;
-            jumpV += 0.85;
+            jumpV += 0.95;
             if (jumpY >= 0) { jumpY = 0; isJumping = false; }
         }
 
         bgY = (bgY + speed) % 100;
 
         timer++;
-        if (timer > 22) {
+        if (timer > 20) {
             var lane = Math.floor(Math.random() * 3);
-            var isEnemy = Math.random() < 0.42;
-            objects.push({ x: lanes[lane], y: -60, enemy: isEnemy });
+            var isEnemy = Math.random() < 0.45;
+            var enemyType = Math.floor(Math.random() * 3);
+            objects.push({ x: lanes[lane], y: -60, enemy: isEnemy, type: enemyType });
             timer = 0;
-            speed += 0.005;
+            
+            speed += 0.008;
+            speedCounter++;
+            if (speedCounter % 35 === 0) {
+                speedUpNotifyTimer = 40;
+            }
         }
 
-        // --- 描画処理：明るく美しい森林小道のグラフィック ---
-        // 両サイド：明るい緑の森
-        ctx.fillStyle = '#3a6632'; ctx.fillRect(0, 0, 400, 700);
-        
-        // 中央：明るい土の小道
-        ctx.fillStyle = '#a67c52'; ctx.fillRect(50, 0, 300, 700);
-        ctx.strokeStyle = '#e6c280'; ctx.lineWidth = 4; ctx.strokeRect(50, 0, 300, 700);
+        // 背景描画
+        ctx.fillStyle = '#2d5026'; ctx.fillRect(0, 0, 400, 700);
+        ctx.fillStyle = '#9e744a'; ctx.fillRect(50, 0, 300, 700);
+        ctx.strokeStyle = '#dca868'; ctx.lineWidth = 4; ctx.strokeRect(50, 0, 300, 700);
 
-        // レーン区切り（クッキリ見やすい黄色破線）
+        // レーンライン
         ctx.strokeStyle = '#ffeb3b'; ctx.lineWidth = 3; ctx.setLineDash([25, 25]); ctx.lineDashOffset = -bgY;
         ctx.beginPath(); ctx.moveTo(150, 0); ctx.lineTo(150, 700); ctx.moveTo(250, 0); ctx.lineTo(250, 700); ctx.stroke();
         ctx.setLineDash([]);
 
-        // 両端の警報ランプポスト（視認性の高い見張り台）
+        // 左右の木製トーチポスト
         var postOffset = bgY % 120;
         for (var pyPos = -100; pyPos < 800; pyPos += 120) {
             var curY = pyPos + postOffset;
-            // 左ポスト
-            ctx.fillStyle = '#444'; ctx.fillRect(8, curY, 34, 50);
-            ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(25, curY + 20, 10, 0, Math.PI * 2); ctx.fill();
-            // 右ポスト
-            ctx.fillStyle = '#444'; ctx.fillRect(358, curY, 34, 50);
-            ctx.fillStyle = '#3388ff'; ctx.beginPath(); ctx.arc(375, curY + 20, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#5c3a21'; ctx.fillRect(14, curY, 18, 45);
+            ctx.fillStyle = '#ff9800'; ctx.beginPath(); ctx.arc(23, curY + 8, 9, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff7c2'; ctx.beginPath(); ctx.arc(23, curY + 8, 4, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#5c3a21'; ctx.fillRect(368, curY, 18, 45);
+            ctx.fillStyle = '#4caf50'; ctx.beginPath(); ctx.arc(377, curY + 8, 9, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#e8f5e9'; ctx.beginPath(); ctx.arc(377, curY + 8, 4, 0, Math.PI * 2); ctx.fill();
         }
 
         // オブジェクト処理
@@ -367,9 +452,9 @@
             var dx = Math.abs(playerX - o.x);
             var dy = Math.abs((playerY + jumpY) - o.y);
             
-            if (dx < 38 && dy < 45) {
+            if (dx < 42 && dy < 45) {
                 if (o.enemy) {
-                    if (jumpY > -25) { endGame(); return; }
+                    if (jumpY > -20) { endGame(); return; }
                 } else {
                     score += 10;
                     D.getElementById('score').innerText = score;
@@ -379,35 +464,19 @@
             }
 
             if (o.enemy) {
-                // 新・障害物：森の世界観にマッチした立体的な「苔むした大岩 ＆ 警告ステッカー」
-                // 影
-                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 18, 34, 10, 0, 0, 6.28); ctx.fill();
-                // 岩の本体
-                ctx.fillStyle = '#6e7b6e'; ctx.beginPath(); ctx.arc(o.x, o.y, 28, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#8a9a8a'; ctx.beginPath(); ctx.arc(o.x - 6, o.y - 6, 18, 0, Math.PI * 2); ctx.fill();
-                // 苔の装飾
-                ctx.fillStyle = '#4caf50'; ctx.beginPath(); ctx.arc(o.x + 8, o.y - 12, 10, 0, Math.PI * 2); ctx.fill();
-                // 警告標識
-                ctx.fillStyle = '#ff2222'; ctx.fillRect(o.x - 14, o.y - 6, 28, 12);
-                ctx.fillStyle = '#ffffff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('STOP', o.x, o.y + 3);
+                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 20, 36, 10, 0, 0, 6.28); ctx.fill();
+
+                if (o.type === 0) {
+                    ctx.fillStyle = '#78909c'; ctx.beginPath(); ctx.arc(o.x, o.y, 28, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#455a64'; ctx.beginPath(); ctx.arc(o.x - 6, o.y - 6, 16, 0, Math.PI * 2); ctx.fill();
+                } else if (o.type === 1) {
+                    ctx.fillStyle = '#b0bec5'; ctx.fillRect(o.x - 38, o.y - 12, 76, 24);
+                    ctx.fillStyle = '#d32f2f'; ctx.fillRect(o.x - 32, o.y - 8, 20, 16); ctx.fillRect(o.x + 12, o.y - 8, 20, 16);
+                } else {
+                    ctx.fillStyle = '#5d4037'; ctx.beginPath(); ctx.arc(o.x, o.y, 26, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(o.x - 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(o.x + 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(o.x - 8, o.y - 4, 4, 0, Math.PI * 2); ctx.arc(o.x + 8, o.y - 4, 4, 0, Math.PI * 2); ctx.fill();
+                }
             } else {
-                // 黄金ドングリ（完全透過）
-                var drawAcornImg = cleanAcornImg || imgAcorn;
-                ctx.drawImage(drawAcornImg, o.x - 28, o.y - 28, 56, 56);
-            }
-
-            if (o.y > 780) objects.splice(i, 1);
-        }
-
-        // プレイヤー（ウリボ ＆ おばあちゃん）
-        var pDrawY = playerY + jumpY;
-        ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 52, 40, 12, 0, 0, 6.28); ctx.fill();
-
-        var drawPlayerImg = cleanPlayerImg || imgPlayer;
-        ctx.drawImage(drawPlayerImg, playerX - 65, pDrawY - 75, 130, 130);
-
-        if (isPlaying) requestAnimationFrame(gameLoop);
-    }
-</script>
-</body>
-</html>
+                var drawAcorn
