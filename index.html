@@ -15,26 +15,21 @@
             background: #223322; box-shadow: 0 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden;
         }
         
-        /* スタート画面 */
+        /* スタート画面（元の美しい画像背景を完全復活） */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #2c5e3b, #1e3f20);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 20px; z-index: 999;
+            background-color: #223322;
+            background-image: url('1788702691552.png');
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+            padding-bottom: 90px; z-index: 999; pointer-events: auto;
         }
-        .title-box {
-            text-align: center; margin-bottom: 40px; color: #fff;
-            text-shadow: 0 3px 6px rgba(0,0,0,0.6);
-        }
-        .title-box h1 { font-size: 28px; color: #ffd700; margin-bottom: 10px; line-height: 1.3; }
-        .title-box p { font-size: 13px; letter-spacing: 1px; color: #a8e6cf; }
-
         .massive-btn {
             width: 85%; padding: 18px; background: linear-gradient(180deg, #ffe600, #ff8800);
             border: 3px solid #ffffff; border-radius: 40px; color: #1a0000; font-size: 22px; font-weight: bold;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.6); cursor: pointer; text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 1000; cursor: pointer; text-align: center;
             text-shadow: 0 1px 0 rgba(255,255,255,0.6); outline: none; -webkit-tap-highlight-color: transparent;
-            font-family: inherit;
+            font-family: inherit; pointer-events: auto;
         }
         .massive-btn:active { transform: scale(0.96); filter: brightness(0.9); }
 
@@ -76,31 +71,33 @@
         }
         .ctrl-btn:active { background: #5c3818; transform: translateY(2px); }
 
-        /* 結果画面 */
+        /* 結果発表画面（元の画像背景を完全復活） */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 20, 10, 0.95);
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-            padding: 20px; z-index: 999;
+            background-color: #223322;
+            background-image: url('1788793217973.png');
+            background-size: cover; background-position: center;
+            display: none; flex-direction: column; justify-content: flex-start; align-items: center;
+            padding-top: 45px; z-index: 999;
+        }
+        #result-screen::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.25); z-index: 1;
         }
         .result-board {
-            background: rgba(20, 30, 20, 0.92); border: 3px solid #ffd700; border-radius: 20px;
-            padding: 20px; width: 88%; text-align: center; color: #ffffff; margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            position: relative; background: rgba(20, 30, 20, 0.92); border: 3px solid #ffd700; border-radius: 20px;
+            padding: 18px 16px; width: 88%; text-align: center; color: #ffffff; margin-bottom: 20px; z-index: 2;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(3px);
         }
-        #version-tag { position: absolute; top: 60px; left: 14px; color: #ffd700; font-size: 11px; z-index: 999; font-weight: bold; }
+        #version-tag { position: absolute; top: 60px; left: 14px; color: #ffd700; font-size: 11px; z-index: 999; opacity: 0.9; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v24 STABLE</div>
+    <div id="version-tag">v25 PERFECT RESTORE</div>
 
     <div id="start-screen">
-        <div class="title-box">
-            <h1>黄金ドングリを<br>集め出せ！</h1>
-            <p>STAMPEDE 100: COLLECT THE ACORNS</p>
-        </div>
         <button class="massive-btn" id="startBtn">ゲームスタート！</button>
     </div>
 
@@ -124,12 +121,12 @@
 
     <div id="result-screen">
         <div class="result-board">
-            <div style="font-size: 22px; color: #ffd700; font-weight: bold; margin-bottom: 10px;">🏆 結果発表 🏆</div>
-            <p style="font-size:15px; margin-bottom: 10px;">押収ドングリ: <span id="res-score" style="font-size:28px; color:#ffd700; font-weight:bold;">0</span> 個</p>
-            <div id="res-rank" style="font-size: 45px; color: #ff3333; font-weight: bold; margin: 5px 0;">S</div>
-            <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold; margin-top:10px;">罪状：どんぐり大量無許可占有罪</p>
+            <div style="font-size: 22px; color: #ffd700; font-weight: bold; text-shadow: 1px 1px 3px #000;">🏆 結果発表 🏆</div>
+            <p style="margin-top:8px; font-size:15px;">押収ドングリ: <span id="res-score" style="font-size:30px; color:#ffd700; font-weight:bold;">0</span> 個</p>
+            <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
+            <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <button class="massive-btn" id="restartBtn" style="width:88%;">もう一度走る！</button>
+        <button class="massive-btn" id="restartBtn" style="position:relative; z-index:1000; width:88%;">もう一度走る！</button>
     </div>
 </div>
 
@@ -144,7 +141,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v24') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v25') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -161,34 +158,19 @@
     var bgY = 0;
     var isBgmOn = true;
     var speedUpNotifyTimer = 0;
+
     var audioCtx = null;
     var bgmTimer = null;
 
     function safeInitAudio() {
         try {
             if (!audioCtx) {
-                var AC = window.AudioContext || window.webkitAudioContext;
-                if (AC) audioCtx = new AC();
+                var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
             }
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-        } catch(e) {}
-    }
-
-    function playAcornSE() {
-        if (!isBgmOn || !audioCtx) return;
-        try {
-            var osc = audioCtx.createOscillator();
-            var gain = audioCtx.createGain();
-            osc.type = 'sine';
-            var t = audioCtx.currentTime;
-            osc.frequency.setValueAtTime(880, t);
-            osc.frequency.setValueAtTime(1200, t + 0.05);
-            gain.gain.setValueAtTime(0.1, t);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(t); osc.stop(t + 0.2);
         } catch(e) {}
     }
 
@@ -198,50 +180,130 @@
             var osc = audioCtx.createOscillator();
             var gain = audioCtx.createGain();
             osc.type = 'sawtooth';
-            var t = audioCtx.currentTime;
-            osc.frequency.setValueAtTime(150, t);
-            osc.frequency.exponentialRampToValueAtTime(10, t + 0.4);
-            gain.gain.setValueAtTime(0.25, t);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+            var time = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(150, time);
+            osc.frequency.exponentialRampToValueAtTime(10, time + 0.4);
+            gain.gain.setValueAtTime(0.25, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(t); osc.stop(t + 0.4);
+            osc.start(time); osc.stop(time + 0.4);
+        } catch(e) {}
+    }
+
+    function playAcornSE() {
+        if (!isBgmOn || !audioCtx) return;
+        try {
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = 'sine';
+            var time = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(880, time);
+            osc.frequency.setValueAtTime(1200, time + 0.05);
+            gain.gain.setValueAtTime(0.1, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(time); osc.stop(time + 0.2);
+        } catch(e) {}
+    }
+
+    function playResultFanfare() {
+        if (!isBgmOn || !audioCtx) return;
+        if (bgmTimer) clearInterval(bgmTimer);
+        try {
+            var time = audioCtx.currentTime;
+            var melody = [523.25, 523.25, 523.25, 659.25, 783.99, 0, 659.25, 783.99, 1046.50];
+            var duration = [0.15, 0.15, 0.15, 0.3, 0.3, 0.15, 0.15, 0.15, 0.6];
+            var offset = 0;
+            
+            for (var i = 0; i < melody.length; i++) {
+                var freq = melody[i];
+                var dur = duration[i];
+                if (freq > 0) {
+                    var osc = audioCtx.createOscillator();
+                    var gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.1, time + offset);
+                    gain.gain.exponentialRampToValueAtTime(0.001, time + offset + dur);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(time + offset);
+                    osc.stop(time + offset + dur);
+                }
+                offset += dur;
+            }
         } catch(e) {}
     }
 
     function initBGM() {
         if (bgmTimer) clearInterval(bgmTimer);
-        var notes = [329.63, 392.00, 440.00, 523.25, 587.33, 523.25, 440.00, 392.00];
+        var notes = [329.63, 392.00, 440.00, 523.25, 587.33, 523.25, 440.00, 392.00, 440.00, 523.25, 659.25, 587.33];
+        var bassNotes = [164.81, 164.81, 220.00, 220.00, 174.61, 174.61, 196.00, 196.00];
         var step = 0;
+        
         bgmTimer = setInterval(function() {
             if (!isPlaying || !isBgmOn || !audioCtx) return;
             try {
-                var t = audioCtx.currentTime;
+                var time = audioCtx.currentTime;
                 var osc = audioCtx.createOscillator();
                 var gain = audioCtx.createGain();
                 osc.type = 'square';
                 osc.frequency.value = notes[step % notes.length];
-                gain.gain.setValueAtTime(0.03, t);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+                gain.gain.setValueAtTime(0.03, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
                 osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(t); osc.stop(t + 0.12);
+                osc.start(time); osc.stop(time + 0.12);
+
+                var bass = audioCtx.createOscillator();
+                var bGain = audioCtx.createGain();
+                bass.type = 'triangle';
+                bass.frequency.value = bassNotes[step % bassNotes.length];
+                bGain.gain.setValueAtTime(0.06, time);
+                bGain.gain.exponentialRampToValueAtTime(0.001, time + 0.13);
+                bass.connect(bGain); bGain.connect(audioCtx.destination);
+                bass.start(time); bass.stop(time + 0.13);
                 step++;
             } catch(e) {}
         }, 135);
     }
 
+    function toggleBGM() {
+        isBgmOn = !isBgmOn;
+        safeInitAudio();
+        var btn = D.getElementById('bgmToggleBtn');
+        if (isBgmOn) {
+            btn.innerText = "🎵 BGM: ON";
+            btn.className = "bgm-btn active";
+            if (!isPlaying) playResultFanfare();
+        } else {
+            btn.innerText = "🔇 BGM: OFF";
+            btn.className = "bgm-btn";
+        }
+    }
+
+    // 元の画像ファイルの読み込み
+    var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
+    var imgAcorn = new Image(); imgAcorn.src = 'image.png';
+
     function startGame(e) {
-        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
         safeInitAudio();
 
-        // 画面の切り替えを確実に行う
-        D.getElementById('start-screen').style.display = 'none';
-        D.getElementById('result-screen').style.display = 'none';
+        var startScreen = D.getElementById('start-screen');
+        var resultScreen = D.getElementById('result-screen');
+        if (startScreen) startScreen.style.display = 'none';
+        if (resultScreen) resultScreen.style.display = 'none';
+        
         D.getElementById('controls').style.display = 'flex';
         D.getElementById('mid-score-board').style.display = 'flex';
 
         isPlaying = true;
         score = 0;
         speed = 7.5;
+        speedUpNotifyTimer = 0;
         currentLane = 1;
         targetX = lanes[currentLane];
         playerX = targetX;
@@ -275,11 +337,12 @@
         isPlaying = false;
         loopRunning = false;
         if (bgmTimer) clearInterval(bgmTimer);
+        
         playHitSE();
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v24', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v25', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -290,9 +353,14 @@
         D.getElementById('controls').style.display = 'none';
         D.getElementById('mid-score-board').style.display = 'none';
         D.getElementById('result-screen').style.display = 'flex';
+
+        setTimeout(function() {
+            playResultFanfare();
+        }, 150);
     }
 
     var timer = 0;
+    var speedCounter = 0;
     function gameLoop() {
         if (!isPlaying) return;
 
@@ -304,16 +372,22 @@
         }
 
         bgY = (bgY + speed) % 100;
+
         timer++;
-        if (timer > 22) {
+        if (timer > 20) {
             var lane = Math.floor(Math.random() * 3);
             var isEnemy = Math.random() < 0.45;
-            objects.push({ x: lanes[lane], y: -60, enemy: isEnemy });
+            var enemyType = Math.floor(Math.random() * 3);
+            objects.push({ x: lanes[lane], y: -60, enemy: isEnemy, type: enemyType });
             timer = 0;
+            
             speed += 0.008;
+            speedCounter++;
+            if (speedCounter % 35 === 0) {
+                speedUpNotifyTimer = 40;
+            }
         }
 
-        // 描画処理
         ctx.fillStyle = '#2d5026'; ctx.fillRect(0, 0, 400, 700);
         ctx.fillStyle = '#9e744a'; ctx.fillRect(50, 0, 300, 700);
         ctx.strokeStyle = '#dca868'; ctx.lineWidth = 4; ctx.strokeRect(50, 0, 300, 700);
@@ -322,6 +396,18 @@
         ctx.beginPath(); ctx.moveTo(150, 0); ctx.lineTo(150, 700); ctx.moveTo(250, 0); ctx.lineTo(250, 700); ctx.stroke();
         ctx.setLineDash([]);
 
+        var postOffset = bgY % 120;
+        for (var pyPos = -100; pyPos < 800; pyPos += 120) {
+            var curY = pyPos + postOffset;
+            ctx.fillStyle = '#5c3a21'; ctx.fillRect(14, curY, 18, 45);
+            ctx.fillStyle = '#ff9800'; ctx.beginPath(); ctx.arc(23, curY + 8, 9, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff7c2'; ctx.beginPath(); ctx.arc(23, curY + 8, 4, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#5c3a21'; ctx.fillRect(368, curY, 18, 45);
+            ctx.fillStyle = '#4caf50'; ctx.beginPath(); ctx.arc(377, curY + 8, 9, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#e8f5e9'; ctx.beginPath(); ctx.arc(377, curY + 8, 4, 0, Math.PI * 2); ctx.fill();
+        }
+
         for (var i = objects.length - 1; i >= 0; i--) {
             var o = objects[i];
             o.y += speed;
@@ -329,7 +415,7 @@
             var dx = Math.abs(playerX - o.x);
             var dy = Math.abs((playerY + jumpY) - o.y);
             
-            if (dx < 40 && dy < 40) {
+            if (dx < 42 && dy < 45) {
                 if (o.enemy) {
                     if (jumpY > -20) { endGame(); return; }
                 } else {
@@ -341,50 +427,51 @@
                 }
             }
 
-            // オブジェクト描画（画像エラー回避用フォールバック）
             if (o.enemy) {
-                ctx.fillStyle = '#607d8b'; ctx.beginPath(); ctx.arc(o.x, o.y, 24, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#d32f2f'; ctx.fillRect(o.x - 16, o.y - 6, 32, 12);
+                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 20, 36, 10, 0, 0, 6.28); ctx.fill();
+                if (o.type === 0) {
+                    ctx.fillStyle = '#78909c'; ctx.beginPath(); ctx.arc(o.x, o.y, 28, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#455a64'; ctx.beginPath(); ctx.arc(o.x - 6, o.y - 6, 16, 0, Math.PI * 2); ctx.fill();
+                } else if (o.type === 1) {
+                    ctx.fillStyle = '#b0bec5'; ctx.fillRect(o.x - 38, o.y - 12, 76, 24);
+                    ctx.fillStyle = '#d32f2f'; ctx.fillRect(o.x - 32, o.y - 8, 20, 16); ctx.fillRect(o.x + 12, o.y - 8, 20, 16);
+                } else {
+                    ctx.fillStyle = '#5d4037'; ctx.beginPath(); ctx.arc(o.x, o.y, 26, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(o.x - 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(o.x + 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(o.x - 8, o.y - 4, 4, 0, Math.PI * 2); ctx.arc(o.x + 8, o.y - 4, 4, 0, Math.PI * 2); ctx.fill();
+                }
             } else {
-                ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 16, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = '#b8860b'; ctx.beginPath(); ctx.arc(o.x, o.y - 12, 8, 0, Math.PI * 2); ctx.fill();
+                if (imgAcorn.complete && imgAcorn.naturalWidth > 0) {
+                    ctx.drawImage(imgAcorn, o.x - 32, o.y - 32, 64, 64);
+                } else {
+                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI * 2); ctx.fill();
+                }
             }
             if (o.y > 780) objects.splice(i, 1);
         }
 
-        // プレイヤー描画（猪に乗ったおばあちゃん風）
         var pDrawY = playerY + jumpY;
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 50, 40, 10, 0, 0, 6.28); ctx.fill();
-        
-        // 猪の体
-        ctx.fillStyle = '#8d5524'; ctx.beginPath(); ctx.ellipse(playerX, pDrawY, 35, 25, 0, 0, Math.PI * 2); ctx.fill();
-        // おばあちゃん
-        ctx.fillStyle = '#ffccaa'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 30, 20, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#e0e0e0'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 38, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 58, 48, 12, 0, 0, 6.28); ctx.fill();
 
+        if (imgPlayer.complete && imgPlayer.naturalWidth > 0) {
+            var srcW = imgPlayer.naturalWidth;
+            var srcH = imgPlayer.naturalHeight * 0.82;
+            ctx.drawImage(imgPlayer, 0, 0, srcW, srcH, playerX - 75, pDrawY - 80, 150, 135);
+        } else {
+            ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 20, 30, 0, Math.PI*2); ctx.fill();
+        }
+
+        if (speedUpNotifyTimer > 0) {
+            speedUpNotifyTimer--;
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.95)';
+            ctx.font = '900 26px sans-serif';
+            ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 5;
+            ctx.strokeText('⚡ SPEED UP! ⚡', 200, 260); ctx.fillText('⚡ SPEED UP! ⚡', 200, 260);
+        }
         if (isPlaying) requestAnimationFrame(gameLoop);
     }
 
-    // イベント登録
+    // タップ＆クリックで確実に画面が切り替わるようにイベント設定
     var startBtn = D.getElementById('startBtn');
-    var restartBtn = D.getElementById('restartBtn');
-
-    startBtn.addEventListener('click', startGame);
-    startBtn.addEventListener('touchend', startGame);
-    restartBtn.addEventListener('click', startGame);
-    restartBtn.addEventListener('touchend', startGame);
-
-    D.getElementById('bgmToggleBtn').addEventListener('click', function() {
-        isBgmOn = !isBgmOn;
-        safeInitAudio();
-        this.innerText = isBgmOn ? "🎵 BGM: ON" : "🔇 BGM: OFF";
-        this.className = isBgmOn ? "bgm-btn active" : "bgm-btn";
-    });
-
-    D.getElementById('leftBtn').addEventListener('click', function() { moveLane(-1); });
-    D.getElementById('jumpBtn').addEventListener('click', jumpAction);
-    D.getElementById('rightBtn').addEventListener('click', function() { moveLane(1); });
-</script>
-</body>
-</html>
-
+    var restartBtn = D.getElem
