@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>黄金ドングリを集め出せ！</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
         body {
             background-color: #111a11; display: flex; justify-content: center; align-items: center;
             min-height: 100vh; font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden;
@@ -92,16 +92,16 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v15 STABLE RELEASE</div>
+    <div id="version-tag">v16 ABSOLUTE FIX</div>
 
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
-        <div class="massive-btn" onclick="startGame(event)" ontouchstart="startGame(event)">ゲームスタート！</div>
+        <div class="massive-btn" onclick="startGame()">ゲームスタート！</div>
     </div>
 
     <div id="top-bar">
         <div>黄金ドングリ回収作戦</div>
-        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM(event)" ontouchstart="toggleBGM(event)">🎵 BGM: ON</button>
+        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM()">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -112,9 +112,9 @@
     </div>
 
     <div id="controls">
-        <div class="ctrl-btn" onclick="moveLane(-1, event)" ontouchstart="moveLane(-1, event)">◀ 左</div>
-        <div class="ctrl-btn" onclick="jumpAction(event)" ontouchstart="jumpAction(event)">▲ ジャンプ</div>
-        <div class="ctrl-btn" onclick="moveLane(1, event)" ontouchstart="moveLane(1, event)">右 ▶</div>
+        <div class="ctrl-btn" onclick="moveLane(-1)">◀ 左</div>
+        <div class="ctrl-btn" onclick="jumpAction()">▲ ジャンプ</div>
+        <div class="ctrl-btn" onclick="moveLane(1)">右 ▶</div>
     </div>
 
     <div id="result-screen">
@@ -124,7 +124,7 @@
             <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
             <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <div class="massive-btn" onclick="startGame(event)" ontouchstart="startGame(event)" style="position:relative; z-index:2; width:88%;">もう一度走る！</div>
+        <div class="massive-btn" onclick="startGame()" style="position:relative; z-index:2; width:88%;">もう一度走る！</div>
     </div>
 </div>
 
@@ -137,7 +137,7 @@
     var isPlaying = false;
     var loopRunning = false;
     var score = 0;
-    var highScore = localStorage.getItem('acorn_highscore_v15') || 0;
+    var highScore = localStorage.getItem('acorn_highscore_v16') || 0;
     D.getElementById('high-score').innerText = highScore;
 
     var lanes = [100, 200, 300];
@@ -154,47 +154,38 @@
     var isBgmOn = true;
     var speedUpNotifyTimer = 0;
 
-    // --- Web Audio API (安全・安定版) ---
+    // 音声コントロール（完全防御設計）
     var audioCtx = null;
     var bgmTimer = null;
 
-    function ensureAudioContext() {
-        if (!audioCtx) {
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            } catch(e) {
-                return; // AudioContext非対応端末
+    function safeInitAudio() {
+        try {
+            if (!audioCtx) {
+                var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) audioCtx = new AudioContextClass();
             }
-        }
-        if (audioCtx && audioCtx.state === 'suspended') {
-            var promise = audioCtx.resume();
-            if (promise && typeof promise.catch === 'function') {
-                promise.catch(function(){}); // エラーを安全に握り潰す
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
             }
-        }
+        } catch(e) {}
     }
 
-    // 衝突の効果音
     function playHitSE() {
         if (!isBgmOn || !audioCtx) return;
         try {
             var osc = audioCtx.createOscillator();
             var gain = audioCtx.createGain();
             osc.type = 'sawtooth';
-            
             var time = audioCtx.currentTime;
             osc.frequency.setValueAtTime(150, time);
             osc.frequency.exponentialRampToValueAtTime(10, time + 0.4);
-            
             gain.gain.setValueAtTime(0.25, time);
             gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
-            
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.start(time); osc.stop(time + 0.4);
         } catch(e) {}
     }
 
-    // ドングリ取得の効果音
     function playAcornSE() {
         if (!isBgmOn || !audioCtx) return;
         try {
@@ -211,21 +202,19 @@
         } catch(e) {}
     }
 
-    // 結果発表 ファンファーレ (スケジューリング再生で安定動作)
     function playResultFanfare() {
         if (!isBgmOn || !audioCtx) return;
         if (bgmTimer) clearInterval(bgmTimer);
-
-        var time = audioCtx.currentTime;
-        var melody = [523.25, 523.25, 523.25, 659.25, 783.99, 0, 659.25, 783.99, 1046.50];
-        var duration = [0.15, 0.15, 0.15, 0.3, 0.3, 0.15, 0.15, 0.15, 0.6];
-        var offset = 0;
-        
-        for (var i = 0; i < melody.length; i++) {
-            var freq = melody[i];
-            var dur = duration[i];
-            if (freq > 0) {
-                try {
+        try {
+            var time = audioCtx.currentTime;
+            var melody = [523.25, 523.25, 523.25, 659.25, 783.99, 0, 659.25, 783.99, 1046.50];
+            var duration = [0.15, 0.15, 0.15, 0.3, 0.3, 0.15, 0.15, 0.15, 0.6];
+            var offset = 0;
+            
+            for (var i = 0; i < melody.length; i++) {
+                var freq = melody[i];
+                var dur = duration[i];
+                if (freq > 0) {
                     var osc = audioCtx.createOscillator();
                     var gain = audioCtx.createGain();
                     osc.type = 'triangle';
@@ -235,13 +224,12 @@
                     osc.connect(gain); gain.connect(audioCtx.destination);
                     osc.start(time + offset);
                     osc.stop(time + offset + dur);
-                } catch(e){}
+                }
+                offset += dur;
             }
-            offset += dur;
-        }
+        } catch(e) {}
     }
 
-    // 走行中BGM
     function initBGM() {
         if (bgmTimer) clearInterval(bgmTimer);
         var notes = [329.63, 392.00, 440.00, 523.25, 587.33, 523.25, 440.00, 392.00, 440.00, 523.25, 659.25, 587.33];
@@ -252,7 +240,6 @@
             if (!isPlaying || !isBgmOn || !audioCtx) return;
             try {
                 var time = audioCtx.currentTime;
-                
                 var osc = audioCtx.createOscillator();
                 var gain = audioCtx.createGain();
                 osc.type = 'square';
@@ -270,16 +257,14 @@
                 bGain.gain.exponentialRampToValueAtTime(0.001, time + 0.13);
                 bass.connect(bGain); bGain.connect(audioCtx.destination);
                 bass.start(time); bass.stop(time + 0.13);
-                
                 step++;
             } catch(e) {}
         }, 135);
     }
 
-    function toggleBGM(e) {
-        if (e && e.cancelable) e.preventDefault();
+    function toggleBGM() {
         isBgmOn = !isBgmOn;
-        ensureAudioContext(); 
+        safeInitAudio();
         var btn = D.getElementById('bgmToggleBtn');
         if (isBgmOn) {
             btn.innerText = "🎵 BGM: ON";
@@ -291,13 +276,13 @@
         }
     }
 
-    // 画像処理周り
+    // 画像読み込みと透過処理
     function makeTransparent(img, callback) {
-        var tempC = D.createElement('canvas');
-        tempC.width = img.width; tempC.height = img.height;
-        var tempCtx = tempC.getContext('2d');
-        tempCtx.drawImage(img, 0, 0);
         try {
+            var tempC = D.createElement('canvas');
+            tempC.width = img.width; tempC.height = img.height;
+            var tempCtx = tempC.getContext('2d');
+            tempCtx.drawImage(img, 0, 0);
             var imgData = tempCtx.getImageData(0, 0, tempC.width, tempC.height);
             var data = imgData.data;
             for (var i = 0; i < data.length; i += 4) {
@@ -337,11 +322,11 @@
         D.getElementById('result-screen').style.backgroundImage = "url('" + imgResult.src + "')";
     };
 
-    function startGame(e) {
-        if (e && e.cancelable) e.preventDefault();
+    // ゲーム開始関数（絶対安全設計）
+    function startGame() {
         if (isPlaying) return;
 
-        ensureAudioContext(); 
+        safeInitAudio();
 
         D.getElementById('start-screen').style.display = 'none';
         D.getElementById('result-screen').style.display = 'none';
@@ -366,8 +351,7 @@
         }
     }
 
-    function moveLane(dir, e) {
-        if (e && e.cancelable) e.preventDefault();
+    function moveLane(dir) {
         if (!isPlaying) return;
         currentLane += dir;
         if (currentLane < 0) currentLane = 0;
@@ -375,8 +359,7 @@
         targetX = lanes[currentLane];
     }
 
-    function jumpAction(e) {
-        if (e && e.cancelable) e.preventDefault();
+    function jumpAction() {
         if (isPlaying && !isJumping) {
             isJumping = true;
             jumpV = -16;
@@ -392,7 +375,7 @@
 
         if (score > highScore) {
             highScore = score;
-            localStorage.setItem('acorn_highscore_v15', highScore);
+            localStorage.setItem('acorn_highscore_v16', highScore);
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -484,4 +467,13 @@
                     ctx.fillStyle = '#455a64'; ctx.beginPath(); ctx.arc(o.x - 6, o.y - 6, 16, 0, Math.PI * 2); ctx.fill();
                 } else if (o.type === 1) {
                     ctx.fillStyle = '#b0bec5'; ctx.fillRect(o.x - 38, o.y - 12, 76, 24);
-                    ctx.fillStyle = '#d32f2f'; ctx.fillRect(o.x - 32, o.y - 8, 20, 16); ctx.fillRect(o.x + 12, o.
+                    ctx.fillStyle = '#d32f2f'; ctx.fillRect(o.x - 32, o.y - 8, 20, 16); ctx.fillRect(o.x + 12, o.y - 8, 20, 16);
+                } else {
+                    ctx.fillStyle = '#5d4037'; ctx.beginPath(); ctx.arc(o.x, o.y, 26, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(o.x - 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(o.x + 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(o.x - 8, o.y - 4, 4, 0, Math.PI * 2); ctx.arc(o.x + 8, o.y - 4, 4, 0, Math.PI * 2); ctx.fill();
+                }
+            } else {
+                var drawAcornImg = cleanAcornImg || imgAcorn;
+                if (drawAcornImg && drawAcornIm
