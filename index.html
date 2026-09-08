@@ -5,430 +5,312 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>黄金ドングリを集め出せ！</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        /* タップ時のズームやスクロールを完全に無効化 */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
         body {
             background-color: #0d1117; display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; min-height: 100dvh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overflow: hidden;
+            min-height: 100vh; font-family: sans-serif; overflow: hidden;
         }
         #game-container {
-            position: relative; width: 100vw; max-width: 420px; height: 100vh; height: 100dvh; max-height: 800px;
+            position: relative; width: 100vw; max-width: 420px; height: 100vh; max-height: 800px;
             background: linear-gradient(180deg, #243422 0%, #384e31 100%);
-            box-shadow: 0 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden; border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden;
         }
-        #sound-btn {
-            position: absolute; top: 12px; right: 12px; z-index: 60; background: rgba(0,0,0,0.8);
-            border: 2px solid #ffd700; color: #fff; border-radius: 50%; width: 42px; height: 42px;
-            font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-        /* ① トップ画面 */
+        
+        /* トップ画面 */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover; background-position: center; background-repeat: no-repeat;
-            background-color: #1b2618; display: flex; flex-direction: column; justify-content: flex-end;
-            align-items: center; padding-bottom: 70px; z-index: 30; overflow: hidden;
+            background-color: #1b2618; background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+            padding-bottom: 80px; z-index: 50;
         }
-        /* Title Fallback (文字) システム */
         #fallback-title {
             position: absolute; top: 30%; color: #ffd700; font-size: 32px; font-weight: bold;
-            text-shadow: 2px 2px 0 #000; z-index: 31; text-align: center; width: 100%;
-            /* 初期は表示させない */
+            text-shadow: 2px 2px 0 #000; text-align: center; width: 100%; z-index: 51;
         }
-        #start-btn {
-            width: 85%; padding: 18px; background: linear-gradient(180deg, #ffea00, #ff8800);
-            border: 3px solid #ffffff; border-radius: 35px; color: #000; font-size: 22px; font-weight: bold;
-            cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.7); animation: pulse 1.5s infinite;
-            touch-action: manipulation; z-index: 35;
+        /* 絶対に押せるボタン */
+        .massive-btn {
+            width: 85%; padding: 20px; background: linear-gradient(180deg, #ffea00, #ff8800);
+            border: 3px solid #ffffff; border-radius: 40px; color: #000; font-size: 24px; font-weight: bold;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.7); z-index: 60; cursor: pointer; text-align: center;
         }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
+        .massive-btn:active { transform: scale(0.95); background: #ff8800; }
 
         /* スコアバー */
         #top-bar {
-            position: absolute; top: 12px; left: 12px; right: 64px; height: 42px;
+            position: absolute; top: 12px; left: 12px; right: 12px; height: 42px;
             background: rgba(0, 0, 0, 0.8); border: 2px solid #ffd700; border-radius: 10px;
             display: flex; justify-content: space-between; align-items: center; padding: 0 14px;
-            color: #ffffff; font-size: 13px; font-weight: bold; z-index: 20;
+            color: #ffffff; font-size: 14px; font-weight: bold; z-index: 20;
         }
-        .score-text { color: #ffd700; font-size: 16px; }
+        
         canvas { width: 100%; height: 100%; display: block; z-index: 10; }
 
         /* 操作ボタン */
         #controls {
-            position: absolute; bottom: 20px; left: 12px; right: 12px; display: none;
-            justify-content: space-between; gap: 10px; z-index: 20;
+            position: absolute; bottom: 20px; left: 10px; right: 10px; display: none;
+            justify-content: space-between; gap: 8px; z-index: 40;
         }
-        .btn {
-            flex: 1; padding: 16px 0; background: linear-gradient(180deg, #9a6332, #5c3a17);
-            border: 2px solid #ffd700; border-radius: 25px; color: #ffffff; font-weight: bold;
-            font-size: 16px; text-align: center; cursor: pointer; touch-action: manipulation;
+        .ctrl-btn {
+            flex: 1; padding: 18px 0; background: linear-gradient(180deg, #9a6332, #5c3a17);
+            border: 2px solid #ffd700; border-radius: 20px; color: #ffffff; font-weight: bold;
+            font-size: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
+        .ctrl-btn:active { background: #5c3a17; transform: translateY(2px); }
 
-        /* ③ 結果発表画面 */
+        /* 結果画面 */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover; background-position: center; background-repeat: no-repeat;
-            background-color: rgba(0, 0, 0, 0.9); display: none; flex-direction: column;
-            justify-content: flex-start; padding-top: 15%; align-items: center; z-index: 30; overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.95); background-size: cover; background-position: center;
+            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 50;
         }
         .result-board {
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); border: 3px solid #ffd700;
-            border-radius: 18px; padding: 22px 16px; width: 90%; text-align: center; color: #ffffff; z-index: 35;
+            background: rgba(0, 0, 0, 0.85); border: 3px solid #ffd700; border-radius: 18px;
+            padding: 24px 16px; width: 90%; text-align: center; color: #ffffff; margin-bottom: 40px;
         }
-        .rank-badge { font-size: 48px; color: #ff4444; font-weight: bold; margin: 4px 0; }
-        
-        /* ボタンを最下部に固定 */
-        #restart-btn {
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 85%; padding: 16px;
-            background: linear-gradient(180deg, #ffea00, #ff8800); border: 3px solid #ffffff; border-radius: 30px;
-            color: #000; font-size: 20px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 40;
-        }
-        
-        /* デプロイ確認用バージョン表記 v5 consolidated */
-        #version-tag {
-            position: absolute; top: 60px; left: 12px; color: rgba(255,255,255,0.5); font-size: 12px; z-index: 99;
-        }
+
+        #version-tag { position: absolute; top: 60px; left: 12px; color: #fff; font-size: 12px; z-index: 99; opacity: 0.5; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v5 consolidated</div>
-    <button id="sound-btn">🔊</button>
+    <div id="version-tag">v6 DIRECT</div>
 
-    <!-- ① スタート画面 -->
+    <!-- トップ画面 (onclickとontouchstartをHTMLに直接埋め込み) -->
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
-        <canvas id="start-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:32;"></canvas>
-        <button id="start-btn">スタート！</button>
+        <div class="massive-btn" onclick="startGame(event)" ontouchstart="startGame(event)">スタート！</div>
     </div>
 
-    <!-- UIバー -->
+    <!-- UI -->
     <div id="top-bar">
-        <div>黄金ドングリ: <span id="score" class="score-text">0</span> 個</div>
+        <div>ドングリ: <span id="score" style="color:#ffd700;">0</span></div>
         <div>最高: <span id="high-score">0</span></div>
     </div>
 
-    <!-- ゲーム描画キャンバス -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- ② プレイ中の操作ボタン -->
+    <!-- プレイ中ボタン -->
     <div id="controls">
-        <div class="btn" id="btn-left">◀ 左</div>
-        <div class="btn" id="btn-jump">▲ ジャンプ</div>
-        <div class="btn" id="btn-right">右 ▶</div>
+        <div class="ctrl-btn" onclick="moveLane(-1, event)" ontouchstart="moveLane(-1, event)">◀ 左</div>
+        <div class="ctrl-btn" onclick="jumpAction(event)" ontouchstart="jumpAction(event)">▲ ジャンプ</div>
+        <div class="ctrl-btn" onclick="moveLane(1, event)" ontouchstart="moveLane(1, event)">右 ▶</div>
     </div>
 
-    <!-- ③ 結果発表画面 -->
+    <!-- 結果画面 -->
     <div id="result-screen">
-        <canvas id="result-particles" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:32;"></canvas>
         <div class="result-board">
-            <div style="font-size: 24px; color: #ffd700; margin-bottom: 12px; font-weight: bold;">【 結 果 発 表 】</div>
-            <p style="font-size:14px; color:#ddd;">押収された黄金ドングリ</p>
-            <div style="font-size: 26px; color: #ffd700; margin: 6px 0; font-weight:bold;"><span id="res-score">0</span> 個</div>
-            <p style="font-size:14px; color:#ddd; margin-top:8px;">評価ランク</p>
-            <div id="res-rank" class="rank-badge">S</div>
-            <p style="font-size: 11px; margin-top: 8px; color: #aaa;">罪状：どんぐり大量無許可占有罪</p>
+            <div style="font-size: 24px; color: #ffd700; font-weight: bold;">結果発表</div>
+            <p style="margin-top:10px;">押収ドングリ: <span id="res-score" style="font-size:28px; color:#ffd700;">0</span> 個</p>
+            <div id="res-rank" style="font-size: 50px; color: #ff4444; font-weight: bold; margin: 10px 0;">S</div>
+            <p style="font-size: 12px; color: #aaa;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <button id="restart-btn">もう一度走る！</button>
+        <div class="massive-btn" onclick="startGame(event)" ontouchstart="startGame(event)">もう一度走る！</div>
     </div>
 </div>
 
 <script>
     // ==========================================
-    // v5 consolidated： 致命的な初期化クラッシュを consolidation
-    // すべてのプログラムロジックを consolidated
+    // v6: エラーで止まらない完全グローバル＆ダイレクト設計
     // ==========================================
-    const D = document;
-    const safeGet = (id) => D.getElementById(id);
+    var D = document;
+    var canvas = D.getElementById('gameCanvas');
+    var ctx = canvas.getContext('2d');
+    canvas.width = 400; canvas.height = 700;
 
-    // ✨ 粉吹雪（パーティクル）演出 システム
-    class ParticleSystem {
-        constructor(canvasId) {
-            this.canvas = safeGet(canvasId);
-            this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
-            this.particles = [];
-            this.init();
-        }
-        init() {
-            if (!this.canvas || !this.ctx) return;
-            this.canvas.width = 400; this.canvas.height = 700;
-            for(let i=0; i<30; i++) {
-                this.particles.push({
-                    x: Math.random() * this.canvas.width, y: Math.random() * this.canvas.height,
-                    radius: Math.random() * 3 + 1, speedY: Math.random() * 1.5 + 0.5,
-                    speedX: (Math.random() - 0.5) * 1, alpha: Math.random() * 0.7 + 0.3
-                });
-            }
-        }
-        updateAndDraw() {
-            if (!this.ctx) return;
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.particles.forEach(p => {
-                p.y += p.speedY; p.x += p.speedX;
-                if (p.y > this.canvas.height) { p.y = 0; p.x = Math.random() * this.canvas.width; }
-                this.ctx.fillStyle = `rgba(255, 230, 150, ${p.alpha})`;
-                this.ctx.beginPath(); this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); this.ctx.fill();
-            });
+    // ゲーム状態
+    var isPlaying = false;
+    var loopRunning = false;
+    var score = 0;
+    var highScore = localStorage.getItem('acorn_highscore') || 0;
+    D.getElementById('high-score').innerText = highScore;
+
+    var lanes = [100, 200, 300];
+    var currentLane = 1;
+    var playerX = 200;
+    var playerY = 520;
+    var targetX = 200;
+    var isJumping = false;
+    var jumpY = 0;
+    var jumpV = 0;
+    var objects = [];
+    var speed = 7;
+    var bgY = 0;
+    var siren = 0;
+
+    // ==========================================
+    // 画像の超安全読み込み（透過処理を削除してクラッシュ防止）
+    // ==========================================
+    var imgTitle = new Image(); imgTitle.src = '1788702691552.png';
+    var imgResult = new Image(); imgResult.src = '1788793217973.png';
+    var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
+    var imgAcorn = new Image(); imgAcorn.src = 'image.png';
+
+    imgTitle.onload = function() {
+        D.getElementById('start-screen').style.backgroundImage = "url('" + imgTitle.src + "')";
+        D.getElementById('fallback-title').style.display = "none";
+    };
+    imgResult.onload = function() {
+        D.getElementById('result-screen').style.backgroundImage = "url('" + imgResult.src + "')";
+    };
+
+    // ==========================================
+    // ダイレクト・ボタン制御
+    // ==========================================
+    function startGame(e) {
+        if (e) e.preventDefault(); // ダブルタップ判定防止
+        if (isPlaying) return;
+
+        // 画面切り替え
+        D.getElementById('start-screen').style.display = 'none';
+        D.getElementById('result-screen').style.display = 'none';
+        D.getElementById('controls').style.display = 'flex';
+
+        // 初期化
+        isPlaying = true;
+        score = 0;
+        speed = 7;
+        currentLane = 1;
+        targetX = lanes[currentLane];
+        playerX = targetX;
+        objects = [];
+        D.getElementById('score').innerText = score;
+
+        // ループが回っていなければ開始
+        if (!loopRunning) {
+            loopRunning = true;
+            requestAnimationFrame(gameLoop);
         }
     }
-    const startParticles = new ParticleSystem('start-particles');
-    const resultParticles = new ParticleSystem('result-particles');
 
-    function runParticleLoops() {
-        try {
-            startParticles.updateAndDraw();
-            resultParticles.updateAndDraw();
-        } catch(e) {}
-        requestAnimationFrame(runParticleLoops);
+    function moveLane(dir, e) {
+        if (e) e.preventDefault();
+        if (!isPlaying) return;
+        currentLane += dir;
+        if (currentLane < 0) currentLane = 0;
+        if (currentLane > 2) currentLane = 2;
+        targetX = lanes[currentLane];
     }
-    runParticleLoops();
 
+    function jumpAction(e) {
+        if (e) e.preventDefault();
+        if (isPlaying && !isJumping) {
+            isJumping = true;
+            jumpV = -15;
+        }
+    }
 
-    // 🖼️ 画像自動設定＆透過システム
-    const IMAGE_CANDIDATES = [
-        '1788702691552.png',
-        '1788793264451.png',
-        '1788793217973.png',
-        'image.png',
-        'title.png', 'player.png', 'result.png', 'acorn.png'
-    ];
+    function endGame() {
+        isPlaying = false;
+        loopRunning = false; // ループを止める
 
-    const loadedImages = {};
-    let playerImgObj = null;
-    let acornImgObj = null;
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('acorn_highscore', highScore);
+            D.getElementById('high-score').innerText = highScore;
+        }
 
-    // 画像の背景を自動で透過させる consolidated 関数
-    function makeTransparent(imgObj, isPlayer) {
-        try {
-            const tCanvas = D.createElement('canvas');
-            tCanvas.width = imgObj.naturalWidth;
-            tCanvas.height = imgObj.naturalHeight;
-            const tCtx = tCanvas.getContext('2d');
-            tCtx.drawImage(imgObj, 0, 0);
-            const imgData = tCtx.getImageData(0, 0, tCanvas.width, tCanvas.height);
-            const data = imgData.data;
+        D.getElementById('res-score').innerText = score;
+        var rank = score >= 300 ? 'S' : score >= 200 ? 'A' : score >= 100 ? 'B' : 'C';
+        D.getElementById('res-rank').innerText = rank;
+
+        D.getElementById('controls').style.display = 'none';
+        D.getElementById('result-screen').style.display = 'flex';
+    }
+
+    // ==========================================
+    // メインループ
+    // ==========================================
+    var timer = 0;
+    function gameLoop() {
+        if (!isPlaying) return; // 停止時は回さない
+
+        // プレイヤー移動
+        playerX += (targetX - playerX) * 0.3;
+        if (isJumping) {
+            jumpY += jumpV;
+            jumpV += 0.85; // 重力
+            if (jumpY >= 0) { jumpY = 0; isJumping = false; }
+        }
+
+        // 背景とサイレン進行
+        bgY = (bgY + speed) % 50;
+        siren = (siren + 0.1) % 6.28;
+
+        // オブジェクト生成
+        timer++;
+        if (timer > 25) {
+            var lane = Math.floor(Math.random() * 3);
+            var isEnemy = Math.random() < 0.4;
+            objects.push({ x: lanes[lane], y: -50, enemy: isEnemy });
+            timer = 0;
+            speed += 0.005; // 徐々に加速
+        }
+
+        // 描画：背景（道路）
+        ctx.fillStyle = '#3a4f32'; ctx.fillRect(0, 0, 400, 700);
+        ctx.fillStyle = '#6b533d'; ctx.fillRect(40, 0, 320, 700);
+        ctx.fillStyle = '#263520'; ctx.fillRect(0, 0, 40, 700); ctx.fillRect(360, 0, 40, 700);
+        
+        ctx.strokeStyle = '#d2b48c'; ctx.lineWidth = 4; ctx.setLineDash([25, 25]); ctx.lineDashOffset = -bgY;
+        ctx.beginPath(); ctx.moveTo(146, 0); ctx.lineTo(146, 700); ctx.moveTo(254, 0); ctx.lineTo(254, 700); ctx.stroke();
+
+        // 描画：サイレン演出（上半分赤、下半分青）
+        ctx.fillStyle = "rgba(255, 0, 0, " + ((Math.sin(siren) + 1) * 0.15) + ")"; ctx.fillRect(0, 0, 400, 350);
+        ctx.fillStyle = "rgba(0, 100, 255, " + ((Math.cos(siren) + 1) * 0.15) + ")"; ctx.fillRect(0, 350, 400, 350);
+
+        // オブジェクト処理
+        for (var i = objects.length - 1; i >= 0; i--) {
+            var o = objects[i];
+            o.y += speed;
+
+            // 当たり判定
+            var dx = Math.abs(playerX - o.x);
+            var dy = Math.abs((playerY + jumpY) - o.y);
             
-            for(let i = 0; i < data.length; i += 4) {
-                const r = data[i], g = data[i+1], b = data[i+2];
-                const max = Math.max(r, g, b), min = Math.min(r, g, b), diff = max - min;
-
-                if (isPlayer) {
-                    // キャラクターの白い背景および透過柄（市松模様）の明るい部分を consolidated 透過
-                    if (Math.abs(r - g) < 20 && Math.abs(g - b) < 20 && r > 150) {
-                        data[i+3] = 0; 
-                    }
+            if (dx < 35 && dy < 45) {
+                if (o.enemy) {
+                    if (jumpY > -20) { endGame(); return; } // 障害物激突
                 } else {
-                    if ((r > 200 && g > 200 && b > 200) || (r < 50 && g < 50 && b < 50) || (diff < 20 && max > 150)) {
-                        data[i+3] = 0;
-                    }
+                    score += 10; // ドングリ獲得
+                    D.getElementById('score').innerText = score;
+                    objects.splice(i, 1);
+                    continue;
                 }
             }
-            tCtx.putImageData(imgData, 0, 0);
-            return tCanvas;
-        } catch(e) {
-            return imgObj; // エラー時は consolidated そのまま返す
-        }
-    }
 
-    function initImages() {
-        let loadedCount = 0;
-        if (IMAGE_CANDIDATES.length === 0) { applyLoadedImages(); return; }
-        IMAGE_CANDIDATES.forEach(filename => {
-            const img = new Image();
-            // ★セキュリティブロックの原因となるcrossOrigin設定を削除
-            img.onload = () => { loadedImages[filename] = img; checkDone(); };
-            img.onerror = () => { checkDone(); };
-            img.src = filename;
-        });
-
-        function checkDone() {
-            loadedCount++;
-            if (loadedCount === IMAGE_CANDIDATES.length) applyLoadedImages();
-        }
-    }
-
-    function applyLoadedImages() {
-        try {
-            const startImg = loadedImages['1788702691552.png'] || loadedImages['title.png'];
-            const startScr = safeGet('start-screen');
-            if (startImg && startScr) {
-                startScr.style.backgroundImage = `url('${startImg.src}')`;
-                const ft = safeGet('fallback-title');
-                if(ft) ft.style.display = 'none'; // 画像があれば文字を consolidated 隠す
-            }
-            
-            const resultImg = loadedImages['1788793217973.png'] || loadedImages['result.png'];
-            if (resultImg && safeGet('result-screen')) safeGet('result-screen').style.backgroundImage = `url('${resultImg.src}')`;
-
-            const rawPlayer = loadedImages['1788793264451.png'] || loadedImages['player.png'];
-            if (rawPlayer && rawPlayer.complete && rawPlayer.naturalWidth !== 0) {
-                playerImgObj = makeTransparent(rawPlayer, true);
+            // 描画：オブジェクト
+            if (o.enemy) {
+                // 障害物（オフィスデスク等）
+                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(o.x - 26, o.y - 14, 52, 28);
+                ctx.fillStyle = '#a06532'; ctx.fillRect(o.x - 22, o.y - 10, 44, 20);
+            } else {
+                // ドングリ画像
+                if (imgAcorn.complete && imgAcorn.naturalWidth > 0) {
+                    ctx.drawImage(imgAcorn, o.x - 30, o.y - 30, 60, 60);
+                } else {
+                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 25, 0, 6.28); ctx.fill();
+                }
             }
 
-            const rawAcorn = loadedImages['image.png'] || loadedImages['acorn.png'];
-            if (rawAcorn && rawAcorn.complete && rawAcorn.naturalWidth !== 0) {
-                acornImgObj = makeTransparent(rawAcorn, false);
-            }
-        } catch (e) {
-            console.error(e);
+            // 画面外削除
+            if (o.y > 750) objects.splice(i, 1);
         }
-    }
-    initImages();
 
-    // 🎵 サウンド consolidated サイレン演出 システム
-    class SoundManager {
-        constructor() { 
-            this.ctx = null; this.muted = false; this.bgmTimer = null; this.step = 0;
+        // 描画：プレイヤー
+        var py = playerY + jumpY;
+        ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 30, 10, 0, 0, 6.28); ctx.fill();
+
+        if (imgPlayer.complete && imgPlayer.naturalWidth > 0) {
+            ctx.drawImage(imgPlayer, playerX - 45, py - 60, 90, 90);
+        } else {
+            ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.arc(playerX, py, 30, 0, 6.28); ctx.fill();
         }
-        init() {
-            try {
-                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
-            } catch(e) { this.muted = true; }
-        }
-        playTone(freq, type, duration, vol=0.1) {
-            try {
-                if (!this.ctx || this.muted) return;
-                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-                osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + duration);
-            } catch(e) {}
-        }
-        playJump() { this.playTone(400, 'sine', 0.15, 0.1); }
-        playCoin() { this.playTone(987, 'sine', 0.08, 0.15); setTimeout(() => this.playTone(1318, 'sine', 0.15, 0.15), 60); }
-        playGameOver() { this.playTone(220, 'sawtooth', 0.5, 0.2); }
-        startBGM() {
-            if (this.bgmTimer) return;
-            const notes = [220, 261.63, 329.63, 392.00, 329.63, 261.63]; this.step = 0;
-            this.bgmTimer = setInterval(() => {
-                if (this.muted) return;
-                this.playTone(notes[this.step % notes.length], 'sawtooth', 0.12, 0.04);
-                if (this.step % 2 === 0) this.playTone(110, 'triangle', 0.2, 0.06); // 低音サイレンベース
-                this.step++;
-            }, 140);
-        }
-        stopBGM() { if (this.bgmTimer) { clearInterval(this.bgmTimer); this.bgmTimer = null; } }
+
+        // 次のフレームへ
+        if (isPlaying) requestAnimationFrame(gameLoop);
     }
-    const sound = new SoundManager();
-
-    // consolidated クリック consolidated サイレン演出 システム
-    const soundBtn = safeGet('sound-btn');
-    if (soundBtn) {
-        soundBtn.addEventListener('click', () => {
-            sound.muted = !sound.muted;
-            soundBtn.textContent = sound.muted ? '🔇' : '🔊';
-            // ローカルストレージは consolidated 削除
-        });
-    }
-
-    // 🎮 consolidated 状態 consolidated サイレン演出 システム
-    function setGameState(state) {
-        const s = safeGet('start-screen'), r = safeGet('result-screen'), c = safeGet('controls');
-        if(s) s.style.display = (state === 'START') ? 'flex' : 'none';
-        if(r) r.style.display = (state === 'RESULT') ? 'flex' : 'none';
-        if(c) c.style.display = (state === 'PLAYING') ? 'flex' : 'none';
-        if (state === 'START' || state === 'RESULT') sound.stopBGM();
-        else if (state === 'PLAYING') sound.startBGM();
-    }
-
-    // consolidated ゲーム consolidated サイレン演出 システム consolidated
-    // consolidated クリック consolidated サイレン演出 システム
-    const canvas = safeGet('gameCanvas');
-    const ctx = canvas ? canvas.getContext('2d') : null;
-    if (canvas) { canvas.width = 400; canvas.height = 700; }
-
-    let score = 0; let highScore = 0;
-    try { highScore = localStorage.getItem('acorn_highscore') || 0; } catch(e) {}
-    const hScoreEl = safeGet('high-score');
-    if(hScoreEl) hScoreEl.textContent = highScore;
-
-    let isGameOver = false; let isPlaying = false;
-    const lanes = [100, 200, 300]; let currentLane = 1; let targetX = lanes[currentLane];
-    let playerX = targetX; let playerY = 520;
-    let isJumping = false; let jumpOffsetY = 0; let jumpVelocity = 0; const gravity = 0.85;
-    let objects = []; let speed = 7; let spawnTimer = 0; let bgOffset = 0; let sirenFlash = 0; 
-
-    // consolidated クリック consolidated サイレン演出 システム
-    const safeClick = (id, fn) => { const el = safeGet(id); if (el) el.addEventListener('click', fn); };
-    safeClick('btn-left', () => moveLane(-1));
-    safeClick('btn-right', () => moveLane(1));
-    safeClick('btn-jump', jump);
-    safeClick('start-btn', startGame);
-    safeClick('restart-btn', resetGame);
-
-    function moveLane(dir) {
-        if (!isPlaying || isGameOver) return;
-        currentLane = Math.max(0, Math.min(2, currentLane + dir)); targetX = lanes[currentLane];
-    }
-    function jump() {
-        if (isPlaying && !isJumping && !isGameOver) { isJumping = true; jumpVelocity = -15; sound.playJump(); }
-    }
-
-    function startGame() {
-        try { sound.init(); } catch(e) {}
-        isPlaying = true; isGameOver = false; setGameState('PLAYING');
-        gameLoop();
-    }
-
-    function spawnObject() {
-        const lane = Math.floor(Math.random() * 3);
-        const isObstacle = Math.random() < 0.4;
-        const types = ['desk', 'chair', 'shelf']; // オフィス consolidated サイレン演出
-        objects.push({ x: lanes[lane], y: -50, type: isObstacle ? types[Math.floor(Math.random() * types.length)] : 'acorn' });
-    }
-
-    function update() {
-        if (!isPlaying || isGameOver) return;
-        playerX += (targetX - playerX) * 0.25;
-        if (isJumping) {
-            jumpOffsetY += jumpVelocity; jumpVelocity += gravity;
-            if (jumpOffsetY >= 0) { jumpOffsetY = 0; isJumping = false; }
-        }
-        bgOffset = (bgOffset + speed) % 50; sirenFlash = (sirenFlash + 0.15) % (Math.PI * 2); 
-        spawnTimer++; if (spawnTimer > 28) { spawnObject(); spawnTimer = 0; speed += 0.003; }
-
-        for (let i = objects.length - 1; i >= 0; i--) {
-            let obj = objects[i]; obj.y += speed;
-            let dx = Math.abs(playerX - obj.x), dy = Math.abs((playerY + jumpOffsetY) - obj.y);
-            if (dx < 35 && dy < 45) {
-                if (obj.type === 'acorn') {
-                    score += 10; const sEl = safeGet('score'); if(sEl) sEl.textContent = score;
-                    sound.playCoin(); objects.splice(i, 1); continue;
-                } else if (jumpOffsetY > -25) { endGame(); return; }
-            }
-            if (obj.y > (canvas ? canvas.height : 700) + 50) objects.splice(i, 1);
-        }
-    }
-
-    function draw() {
-        if (!ctx || !canvas) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 背景
-        ctx.fillStyle = '#3a4f32'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#6b533d'; ctx.fillRect(40, 0, 320, canvas.height);
-        ctx.fillStyle = '#263520'; ctx.fillRect(0, 0, 40, canvas.height); ctx.fillRect(360, 0, 40, canvas.height);
-
-        ctx.strokeStyle = '#d2b48c'; ctx.setLineDash([25, 25]); ctx.lineDashOffset = -bgOffset; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(146, 0); ctx.lineTo(146, canvas.height); ctx.moveTo(254, 0); ctx.lineTo(254, canvas.height);
-        ctx.stroke(); ctx.setLineDash([]);
-
-        // パトランプ演出 consolidated サイレン演出
-        ctx.fillStyle = `rgba(255, 0, 0, ${(Math.sin(sirenFlash) + 1) * 0.15})`; ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
-        ctx.fillStyle = `rgba(0, 100, 255, ${(Math.cos(sirenFlash) + 1) * 0.15})`; ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
-
-        // オブジェクト
-        objects.forEach(obj => {
-            if (obj.type === 'acorn') {
-                if (acornImgObj && acornImgObj.width) {
-                    const aspect = acornImgObj.width / acornImgObj.height;
-                    let drawW = 85, drawH = 85 / aspect;
-                    if (aspect < 0.8) { drawH = 90; drawW = 90 * aspect; }
-                    ctx.drawImage(acornImgObj, obj.x - drawW/2, obj.y - drawH/2, drawW, drawH);
-                } else { ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(obj.x, obj.y, 28, 0, Math.PI * 2); ctx.fill(); }
-            } else if (obj.type === 'desk') {
-                // オフィス consolidated サイレン演出
-                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(obj.x - 26,
+</script>
+</body>
+</html>
