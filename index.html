@@ -37,9 +37,9 @@
         /* スコアバー */
         #top-bar {
             position: absolute; top: 12px; left: 12px; right: 12px; height: 42px;
-            background: rgba(0, 0, 0, 0.7); border: 2px solid #ffd700; border-radius: 10px;
+            background: rgba(0, 0, 0, 0.8); border: 2px solid #ffd700; border-radius: 10px;
             display: flex; justify-content: space-between; align-items: center; padding: 0 14px;
-            color: #ffffff; font-size: 14px; font-weight: bold; z-index: 20; backdrop-filter: blur(4px);
+            color: #ffffff; font-size: 14px; font-weight: bold; z-index: 20;
         }
         
         canvas { width: 100%; height: 100%; display: block; z-index: 10; }
@@ -50,11 +50,11 @@
             justify-content: space-between; gap: 8px; z-index: 40;
         }
         .ctrl-btn {
-            flex: 1; padding: 18px 0; background: linear-gradient(180deg, #8b5a2b, #4a2e12);
+            flex: 1; padding: 18px 0; background: linear-gradient(180deg, #9a6332, #5c3a17);
             border: 2px solid #ffd700; border-radius: 20px; color: #ffffff; font-weight: bold;
             font-size: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
-        .ctrl-btn:active { background: #4a2e12; transform: translateY(2px); }
+        .ctrl-btn:active { background: #5c3a17; transform: translateY(2px); }
 
         /* 結果画面 */
         #result-screen {
@@ -62,13 +62,12 @@
             background-size: cover; background-position: center;
             display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 50;
         }
-        /* 結果画面を見やすくするためのダークフィルター */
         #result-screen::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.65); z-index: 1;
+            background: rgba(0, 0, 0, 0.85); z-index: 1;
         }
         .result-board {
-            position: relative; background: rgba(0, 0, 0, 0.85); border: 3px solid #ffd700; border-radius: 18px;
+            position: relative; border: 3px solid #ffd700; border-radius: 18px;
             padding: 24px 16px; width: 90%; text-align: center; color: #ffffff; margin-bottom: 40px; z-index: 2;
         }
 
@@ -78,7 +77,7 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v7 REFINERY</div>
+    <div id="version-tag">v8 AUTO-TRANSPARENT</div>
 
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
@@ -134,11 +133,53 @@
     var bgY = 0;
     var siren = 0;
 
-    // 画像読み込み
+    // ==========================================
+    // 魔法の処理：画像の白い背景をプログラムで完全に透明にする関数
+    // ==========================================
+    function makeTransparent(img, callback) {
+        var tempC = document.createElement('canvas');
+        tempC.width = img.width;
+        tempC.height = img.height;
+        var tempCtx = tempC.getContext('2d');
+        tempCtx.drawImage(img, 0, 0);
+        
+        try {
+            var imgData = tempCtx.getImageData(0, 0, tempC.width, tempC.height);
+            var data = imgData.data;
+            for (var i = 0; i < data.length; i += 4) {
+                var r = data[i], g = data[i+1], b = data[i+2];
+                // 白に近い部分を透明（Alpha = 0）にする
+                if (r > 200 && g > 200 && b > 200) {
+                    data[i+3] = 0; 
+                }
+            }
+            tempCtx.putImageData(imgData, 0, 0);
+            var newImg = new Image();
+            newImg.onload = function() { callback(newImg); };
+            newImg.src = tempC.toDataURL();
+        } catch(e) {
+            callback(img); // エラー時はそのまま
+        }
+    }
+
+    var cleanPlayerImg = null;
+    var cleanAcornImg = null;
+
+    // 画像読み込みと自動白抜き処理
     var imgTitle = new Image(); imgTitle.src = '1788702691552.png';
     var imgResult = new Image(); imgResult.src = '1788793217973.png';
-    var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
-    var imgAcorn = new Image(); imgAcorn.src = 'image.png';
+    
+    var imgPlayer = new Image();
+    imgPlayer.src = '1788793264451.png';
+    imgPlayer.onload = function() {
+        makeTransparent(imgPlayer, function(res) { cleanPlayerImg = res; });
+    };
+
+    var imgAcorn = new Image();
+    imgAcorn.src = 'image.png';
+    imgAcorn.onload = function() {
+        makeTransparent(imgAcorn, function(res) { cleanAcornImg = res; });
+    };
 
     imgTitle.onload = function() {
         D.getElementById('start-screen').style.backgroundImage = "url('" + imgTitle.src + "')";
@@ -217,7 +258,7 @@
             if (jumpY >= 0) { jumpY = 0; isJumping = false; }
         }
 
-        bgY = (bgY + speed) % 700;
+        bgY = (bgY + speed) % 50;
         siren = (siren + 0.1) % 6.28;
 
         timer++;
@@ -229,33 +270,20 @@
             speed += 0.005;
         }
 
-        // ==========================================
-        // 描画パート：今の画像を活かしたリッチな森の演出
-        // ==========================================
-        ctx.clearRect(0, 0, 400, 700);
+        // 描画：プレイ画面の背景（森の道路風）
+        ctx.fillStyle = '#3a4f32'; ctx.fillRect(0, 0, 400, 700);
+        ctx.fillStyle = '#6b533d'; ctx.fillRect(40, 0, 320, 700);
+        ctx.fillStyle = '#263520'; ctx.fillRect(0, 0, 40, 700); ctx.fillRect(360, 0, 40, 700);
+        
+        ctx.strokeStyle = '#d2b48c'; ctx.lineWidth = 4; ctx.setLineDash([25, 25]); ctx.lineDashOffset = -bgY;
+        ctx.beginPath(); ctx.moveTo(146, 0); ctx.lineTo(146, 700); ctx.moveTo(254, 0); ctx.lineTo(254, 700); ctx.stroke();
+        ctx.setLineDash([]);
 
-        // 1. 背景：タイトル画像の森を流れるように敷き詰める（ロード済みの場合）
-        if (imgTitle.complete && imgTitle.naturalWidth > 0) {
-            ctx.drawImage(imgTitle, 0, bgY - 700, 400, 700);
-            ctx.drawImage(imgTitle, 0, bgY, 400, 700);
-        } else {
-            ctx.fillStyle = '#1b2618'; ctx.fillRect(0, 0, 400, 700);
-        }
+        // サイレン演出
+        ctx.fillStyle = "rgba(255, 0, 0, " + ((Math.sin(siren) + 1) * 0.15) + ")"; ctx.fillRect(0, 0, 400, 350);
+        ctx.fillStyle = "rgba(0, 100, 255, " + ((Math.cos(siren) + 1) * 0.15) + ")"; ctx.fillRect(0, 350, 400, 350);
 
-        // 2. レーンを分かりやすくする半透明の道オーバーレイ
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-        ctx.fillRect(50, 0, 300, 700);
-
-        // 3. けもの道のセンターライン（光る草の軌跡風）
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)'; ctx.lineWidth = 3; ctx.setLineDash([20, 20]); ctx.lineDashOffset = -bgY;
-        ctx.beginPath(); ctx.moveTo(150, 0); ctx.lineTo(150, 700); ctx.moveTo(250, 0); ctx.lineTo(250, 700); ctx.stroke();
-        ctx.setLineDash([]); // リセット
-
-        // 4. 警察のサイレン演出（控えめな光）
-        ctx.fillStyle = "rgba(255, 0, 0, " + ((Math.sin(siren) + 1) * 0.1) + ")"; ctx.fillRect(0, 0, 400, 350);
-        ctx.fillStyle = "rgba(0, 100, 255, " + ((Math.cos(siren) + 1) * 0.1) + ")"; ctx.fillRect(0, 350, 400, 350);
-
-        // 5. オブジェクト処理
+        // オブジェクト処理
         for (var i = objects.length - 1; i >= 0; i--) {
             var o = objects[i];
             o.y += speed;
@@ -275,43 +303,27 @@
             }
 
             if (o.enemy) {
-                // 障害物：少し立体的な「丸太（バリケード風）」にデザイン
-                ctx.fillStyle = '#4a2e12'; ctx.fillRect(o.x - 28, o.y - 14, 56, 28);
-                ctx.fillStyle = '#6b4218'; ctx.fillRect(o.x - 24, o.y - 10, 48, 20);
-                ctx.fillStyle = '#ffd700'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('STOP', o.x, o.y + 4);
+                ctx.fillStyle = '#8b5a2b'; ctx.fillRect(o.x - 26, o.y - 14, 52, 28);
+                ctx.fillStyle = '#a06532'; ctx.fillRect(o.x - 22, o.y - 10, 44, 20);
             } else {
-                // ドングリ：白い背景を自動で消す（multiply合成 または 丸型クリップ）
-                ctx.save();
-                if (imgAcorn.complete && imgAcorn.naturalWidth > 0) {
-                    // 丸く切り抜いて配置することで四角い白背景を完全に隠す
-                    ctx.beginPath(); ctx.arc(o.x, o.y, 24, 0, 6.28); ctx.clip();
-                    ctx.drawImage(imgAcorn, o.x - 28, o.y - 28, 56, 56);
-                } else {
-                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 22, 0, 6.28); ctx.fill();
-                }
-                ctx.restore();
+                // 自動白抜きされたドングリを描画
+                var drawAcornImg = cleanAcornImg || imgAcorn;
+                ctx.drawImage(drawAcornImg, o.x - 30, o.y - 30, 60, 60);
             }
 
             if (o.y > 750) objects.splice(i, 1);
         }
 
-        // 6. プレイヤー（おばあちゃん＆イノシシ）の描画：白い四角を綺麗に消す合成処理
+        // プレイヤー描画
         var py = playerY + jumpY;
-        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 28, 9, 0, 0, 6.28); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 30, 10, 0, 0, 6.28); ctx.fill();
 
-        ctx.save();
-        if (imgPlayer.complete && imgPlayer.naturalWidth > 0) {
-            // 画像の周りを円形にクリップしつつ、さらに白背景が馴染むように配置
-            ctx.beginPath(); ctx.arc(playerX, py - 10, 42, 0, 6.28); ctx.clip();
-            ctx.drawImage(imgPlayer, playerX - 48, py - 60, 96, 96);
-        } else {
-            ctx.fillStyle = '#e67e22'; ctx.beginPath(); ctx.arc(playerX, py, 30, 0, 6.28); ctx.fill();
-        }
-        ctx.restore();
+        // 自動白抜きされたキャラクターを描画
+        var drawPlayerImg = cleanPlayerImg || imgPlayer;
+        ctx.drawImage(drawPlayerImg, playerX - 45, py - 60, 90, 90);
 
         if (isPlaying) requestAnimationFrame(gameLoop);
     }
 </script>
 </body>
 </html>
-
