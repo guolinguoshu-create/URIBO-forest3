@@ -66,11 +66,11 @@
         .ctrl-btn {
             flex: 1; padding: 14px 0; background: linear-gradient(180deg, #a06836, #5c3818);
             border: 2px solid #ffd700; border-radius: 16px; color: #ffffff; font-weight: bold;
-            font-size: 15px; text-align: center; box-shadow: 0 5px 12px rgba(0,0,0,0.5);
+            font-size: 16px; text-align: center; box-shadow: 0 5px 12px rgba(0,0,0,0.5);
         }
         .ctrl-btn:active { background: #5c3818; transform: translateY(2px); }
 
-        /* 結果発表画面（上寄せ配置） */
+        /* 結果発表画面（上寄せレイアウト） */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -92,7 +92,7 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v13 AUDIO ENHANCED</div>
+    <div id="version-tag">v14 Audio Context FIXED</div>
 
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
@@ -137,7 +137,7 @@
     var isPlaying = false;
     var loopRunning = false;
     var score = 0;
-    var highScore = localStorage.getItem('acorn_highscore_v13') || 0;
+    var highScore = localStorage.getItem('acorn_highscore_v14') || 0;
     D.getElementById('high-score').innerText = highScore;
 
     var lanes = [100, 200, 300];
@@ -154,44 +154,55 @@
     var isBgmOn = true;
     var speedUpNotifyTimer = 0;
 
-    // Web Audio API システム
+    // Web Audio API システム (v14：安定性向上)
     var audioCtx = null;
     var bgmTimer = null;
     var resultBgmTimer = null;
 
+    // v14：AudioContextの生成と、suspended状態の解除を「安全に」行う関数
     function ensureAudioContext() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(e => {
+                    isBgmOn = false; // レジューム失敗時は音を谛める
+                });
+            }
+        } catch(e) {
+            isBgmOn = false; // AudioContext非対応など致命的エラー
         }
     }
 
-    // 1. 障害物衝突サウンド (クラッシュ効果音)
+    // 1. 障害物衝突サウンド (v14：安全性向上)
     function playHitSE() {
         if (!isBgmOn) return;
-        ensureAudioContext();
-        try {
-            var osc = audioCtx.createOscillator();
-            var gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
-            
-            // ピッチ急降下による衝突インパクト音
-            osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
-            
-            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
-            
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.35);
-        } catch(e) {}
+        ensureAudioContext(); // 安全対策 (ゲーム中)
+        
+        // v14: AudioContextがrunningであることを確認
+        if (audioCtx && audioCtx.state === 'running') {
+            try {
+                var osc = audioCtx.createOscillator();
+                var gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
+                
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+                
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+            } catch(e) {}
+        }
     }
 
-    // 2. 走行中BGM (高速・疾走感)
+    // 2. 走行中BGM (v14：安全性向上)
     function initBGM() {
-        ensureAudioContext();
+        // ★v14方針：この関数を呼ぶ前（startGame内）で既にensureされている前提
+        ensureAudioContext(); 
         if (bgmTimer) clearInterval(bgmTimer);
         if (resultBgmTimer) clearInterval(resultBgmTimer);
         
@@ -201,37 +212,42 @@
         
         bgmTimer = setInterval(function() {
             if (!isPlaying || !isBgmOn) return;
-            try {
-                var osc = audioCtx.createOscillator();
-                var gain = audioCtx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.value = notes[step % notes.length];
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+            
+            // v14: 音を鳴らす直前にも安全確認 (インターバル内でのブロックに備える)
+            if (audioCtx && audioCtx.state === 'running') {
+                try {
+                    var osc = audioCtx.createOscillator();
+                    var gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.value = notes[step % notes.length];
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.12);
 
-                var bass = audioCtx.createOscillator();
-                var bGain = audioCtx.createGain();
-                bass.type = 'triangle';
-                bass.frequency.value = bassNotes[step % bassNotes.length];
-                bGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                bGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.13);
-                bass.connect(bGain); bGain.connect(audioCtx.destination);
-                bass.start(); bass.stop(audioCtx.currentTime + 0.13);
-                
-                step++;
-            } catch(e) {}
+                    var bass = audioCtx.createOscillator();
+                    var bGain = audioCtx.createGain();
+                    bass.type = 'triangle';
+                    bass.frequency.value = bassNotes[step % bassNotes.length];
+                    bGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    bGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.13);
+                    bass.connect(bGain); bGain.connect(audioCtx.destination);
+                    bass.start(); bass.stop(audioCtx.currentTime + 0.13);
+                    
+                    step++;
+                } catch(e) {}
+            } else {
+                audioCtx.resume(); // suspendedの場合は再ブロック解除を試みる
+            }
         }, 135);
     }
 
-    // 3. 結果発表表彰ファンファーレBGM
+    // 3. 結果発表表彰ファンファーレBGM (v14：安全性向上)
     function initResultBGM() {
-        ensureAudioContext();
+        ensureAudioContext(); // 安全対策
         if (bgmTimer) clearInterval(bgmTimer);
         if (resultBgmTimer) clearInterval(resultBgmTimer);
 
-        // 華やかで明るい表彰式メロディ
         var fanfareMelody = [
             523.25, 523.25, 523.25, 659.25, 783.99, 0, 659.25, 783.99, 1046.50, 0, 0, 0,
             698.46, 698.46, 698.46, 880.00, 1046.50, 0, 880.00, 1046.50, 1174.66, 0, 0, 0
@@ -240,40 +256,53 @@
 
         resultBgmTimer = setInterval(function() {
             if (isPlaying || !isBgmOn) return;
-            try {
-                var freq = fanfareMelody[step % fanfareMelody.length];
-                if (freq > 0) {
-                    var osc = audioCtx.createOscillator();
-                    var gain = audioCtx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.22);
-                }
-                step++;
-            } catch(e) {}
+
+            // v14: 音を鳴らす直前にも安全確認
+            if (audioCtx && audioCtx.state === 'running') {
+                try {
+                    var freq = fanfareMelody[step % fanfareMelody.length];
+                    if (freq > 0) {
+                        var osc = audioCtx.createOscillator();
+                        var gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+                        osc.connect(gain); gain.connect(audioCtx.destination);
+                        osc.start(); osc.stop(audioCtx.currentTime + 0.22);
+                    }
+                    step++;
+                } catch(e) {}
+            } else {
+                audioCtx.resume(); // suspendedの場合は再ブロック解除を試みる
+            }
         }, 160);
     }
 
     function toggleBGM(e) {
         if (e) e.preventDefault();
+        
         isBgmOn = !isBgmOn;
+
+        // ★v14: 音声系の安全な初期化 (ユーザーコンテキスト内)
+        ensureAudioContext(); 
+
         var btn = D.getElementById('bgmToggleBtn');
         if (isBgmOn) {
             btn.innerText = "🎵 BGM: ON";
             btn.className = "bgm-btn active";
-            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-            if (!isPlaying) initResultBGM();
+            if (!isPlaying) {
+                initResultBGM(); // 結果画面中にONにした場合は表彰BGM開始
+            }
         } else {
             btn.innerText = "🔇 BGM: OFF";
             btn.className = "bgm-btn";
         }
     }
 
+    // 画像透過処理
     function makeTransparent(img, callback) {
-        var tempC = document.createElement('canvas');
+        var tempC = D.createElement('canvas'); // ★Dを使う
         tempC.width = img.width; tempC.height = img.height;
         var tempCtx = tempC.getContext('2d');
         tempCtx.drawImage(img, 0, 0);
@@ -283,6 +312,7 @@
             var data = imgData.data;
             for (var i = 0; i < data.length; i += 4) {
                 var r = data[i], g = data[i+1], b = data[i+2];
+                // 白、チェッカーボードを透明にする
                 if ((r > 190 && g > 190 && b > 190) || (Math.abs(r - g) < 15 && Math.abs(g - b) < 15 && r > 160)) {
                     data[i+3] = 0; 
                 }
@@ -291,7 +321,7 @@
             var newImg = new Image();
             newImg.onload = function() { callback(newImg); };
             newImg.src = tempC.toDataURL();
-        } catch(e) { callback(img); }
+        } catch(e) { callback(img); } // CORS等でImageData取得失敗時はそのまま
     }
 
     var cleanPlayerImg = null;
@@ -326,6 +356,9 @@
         if (e) e.preventDefault();
         if (isPlaying) return;
 
+        // ★v14: 音声系の安全な初期化 (ユーザーコンテキスト内)
+        ensureAudioContext(); 
+
         D.getElementById('start-screen').style.display = 'none';
         D.getElementById('result-screen').style.display = 'none';
         D.getElementById('controls').style.display = 'flex';
@@ -341,7 +374,7 @@
         objects = [];
         D.getElementById('score').innerText = score;
 
-        initBGM();
+        initBGM(); // ★AudioContextがrunningであることを前提にする
 
         if (!loopRunning) {
             loopRunning = true;
@@ -370,11 +403,12 @@
         isPlaying = false;
         loopRunning = false;
         
-        playHitSE(); // 衝突効果音再生
+        playHitSE(); // ★衝突効果音再生。このの中でensureされる
 
         if (score > highScore) {
+            // ★v12 -> v14へ最高記録を更新
             highScore = score;
-            localStorage.setItem('acorn_highscore_v13', highScore);
+            localStorage.setItem('acorn_highscore_v14', highScore); 
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -386,7 +420,7 @@
         D.getElementById('mid-score-board').style.display = 'none';
         D.getElementById('result-screen').style.display = 'flex';
 
-        // 100ms後に表彰BGM開始
+        // 100ms後に表彰BGM開始。このの中でensureされる
         setTimeout(function() {
             initResultBGM();
         }, 100);
@@ -457,26 +491,4 @@
                     if (jumpY > -20) { endGame(); return; }
                 } else {
                     score += 10;
-                    D.getElementById('score').innerText = score;
-                    objects.splice(i, 1);
-                    continue;
-                }
-            }
-
-            if (o.enemy) {
-                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 20, 36, 10, 0, 0, 6.28); ctx.fill();
-
-                if (o.type === 0) {
-                    ctx.fillStyle = '#78909c'; ctx.beginPath(); ctx.arc(o.x, o.y, 28, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#455a64'; ctx.beginPath(); ctx.arc(o.x - 6, o.y - 6, 16, 0, Math.PI * 2); ctx.fill();
-                } else if (o.type === 1) {
-                    ctx.fillStyle = '#b0bec5'; ctx.fillRect(o.x - 38, o.y - 12, 76, 24);
-                    ctx.fillStyle = '#d32f2f'; ctx.fillRect(o.x - 32, o.y - 8, 20, 16); ctx.fillRect(o.x + 12, o.y - 8, 20, 16);
-                } else {
-                    ctx.fillStyle = '#5d4037'; ctx.beginPath(); ctx.arc(o.x, o.y, 26, 0, Math.PI * 2); ctx.fill();
-                    ctx.beginPath(); ctx.arc(o.x - 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
-                    ctx.beginPath(); ctx.arc(o.x + 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(o.x - 8, o.y - 4, 4, 0, Math.PI * 2); ctx.arc(o.x + 8, o.y - 4, 4, 0, Math.PI * 2); ctx.fill();
-                }
-            } else {
-                var drawAcorn
+                    const sEl = D.getElementById('score'); if(
