@@ -22,12 +22,12 @@
             background-image: url('1788702691552.png');
             background-size: cover; background-position: center;
             display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 90px; z-index: 50;
+            padding-bottom: 90px; z-index: 999; pointer-events: auto;
         }
         .massive-btn {
             width: 85%; padding: 18px; background: linear-gradient(180deg, #ffe600, #ff8800);
             border: 3px solid #ffffff; border-radius: 40px; color: #1a0000; font-size: 22px; font-weight: bold;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 100; cursor: pointer; text-align: center;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 1000; cursor: pointer; text-align: center;
             text-shadow: 0 1px 0 rgba(255,255,255,0.6); outline: none; -webkit-tap-highlight-color: transparent;
             font-family: inherit; pointer-events: auto;
         }
@@ -78,7 +78,7 @@
             background-image: url('1788793217973.png');
             background-size: cover; background-position: center;
             display: none; flex-direction: column; justify-content: flex-start; align-items: center;
-            padding-top: 45px; z-index: 50;
+            padding-top: 45px; z-index: 999;
         }
         #result-screen::before {
             content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -89,13 +89,13 @@
             padding: 18px 16px; width: 88%; text-align: center; color: #ffffff; margin-bottom: 20px; z-index: 2;
             box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(3px);
         }
-        #version-tag { position: absolute; top: 60px; left: 14px; color: #ffd700; font-size: 11px; z-index: 99; opacity: 0.8; font-weight: bold; }
+        #version-tag { position: absolute; top: 60px; left: 14px; color: #ffd700; font-size: 11px; z-index: 999; opacity: 0.9; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v22 WORKING</div>
+    <div id="version-tag">v23 FORCE START</div>
 
     <div id="start-screen">
         <button class="massive-btn" id="startBtn">ゲームスタート！</button>
@@ -126,7 +126,7 @@
             <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
             <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <button class="massive-btn" id="restartBtn" style="position:relative; z-index:100; width:88%;">もう一度走る！</button>
+        <button class="massive-btn" id="restartBtn" style="position:relative; z-index:1000; width:88%;">もう一度走る！</button>
     </div>
 </div>
 
@@ -141,7 +141,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v22') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v23') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -283,13 +283,20 @@
     var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
     var imgAcorn = new Image(); imgAcorn.src = 'image.png';
 
-    function startGame() {
-        if (isPlaying) return;
+    function startGame(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
 
         safeInitAudio();
 
-        D.getElementById('start-screen').style.display = 'none';
-        D.getElementById('result-screen').style.display = 'none';
+        // 確実に画面を非表示にする
+        var startScreen = D.getElementById('start-screen');
+        var resultScreen = D.getElementById('result-screen');
+        if (startScreen) startScreen.style.display = 'none';
+        if (resultScreen) resultScreen.style.display = 'none';
+        
         D.getElementById('controls').style.display = 'flex';
         D.getElementById('mid-score-board').style.display = 'flex';
 
@@ -335,7 +342,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v22', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v23', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -465,9 +472,8 @@
         if (isPlaying) requestAnimationFrame(gameLoop);
     }
 
-    // イベントリスナーの安全な割り当て
-    D.getElementById('startBtn').addEventListener('click', startGame);
-    D.getElementById('restartBtn').addEventListener('click', startGame);
-    D.getElementById('bgmToggleBtn').addEventListener('click', toggleBGM);
-    D.getElementById('leftBtn').addEventListener('click', function() { moveLane(-1); });
-    D.getElementById('jumpBtn').addEventListener('click
+    // タップ・クリック両方で確実に反応するイベント設定
+    var startBtn = D.getElementById('startBtn');
+    var restartBtn = D.getElementById('restartBtn');
+    
+    sta
