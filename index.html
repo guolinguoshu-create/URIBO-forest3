@@ -49,7 +49,7 @@
 
         canvas { width: 100%; height: 100%; display: block; z-index: 10; }
 
-        /* キャラクターと操作ボタンの間に配置するスコアエリア */
+        /* スコアエリア */
         #mid-score-board {
             position: absolute; bottom: 88px; left: 12px; right: 12px;
             background: rgba(15, 25, 15, 0.85); border: 2px solid #ffd700; border-radius: 14px;
@@ -70,7 +70,7 @@
         }
         .ctrl-btn:active { background: #5c3818; transform: translateY(2px); }
 
-        /* 結果発表画面（上寄せレイアウト） */
+        /* 結果発表画面 */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -92,7 +92,7 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v14 Audio Context FIXED</div>
+    <div id="version-tag">v15 STABLE RELEASE</div>
 
     <div id="start-screen">
         <div id="fallback-title">黄金ドングリを集め出せ！</div>
@@ -101,7 +101,7 @@
 
     <div id="top-bar">
         <div>黄金ドングリ回収作戦</div>
-        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM(event)">🎵 BGM: ON</button>
+        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM(event)" ontouchstart="toggleBGM(event)">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -137,7 +137,7 @@
     var isPlaying = false;
     var loopRunning = false;
     var score = 0;
-    var highScore = localStorage.getItem('acorn_highscore_v14') || 0;
+    var highScore = localStorage.getItem('acorn_highscore_v15') || 0;
     D.getElementById('high-score').innerText = highScore;
 
     var lanes = [100, 200, 300];
@@ -154,165 +154,154 @@
     var isBgmOn = true;
     var speedUpNotifyTimer = 0;
 
-    // Web Audio API システム (v14：安定性向上)
+    // --- Web Audio API (安全・安定版) ---
     var audioCtx = null;
     var bgmTimer = null;
-    var resultBgmTimer = null;
 
-    // v14：AudioContextの生成と、suspended状態の解除を「安全に」行う関数
     function ensureAudioContext() {
-        try {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume().catch(e => {
-                    isBgmOn = false; // レジューム失敗時は音を谛める
-                });
-            }
-        } catch(e) {
-            isBgmOn = false; // AudioContext非対応など致命的エラー
-        }
-    }
-
-    // 1. 障害物衝突サウンド (v14：安全性向上)
-    function playHitSE() {
-        if (!isBgmOn) return;
-        ensureAudioContext(); // 安全対策 (ゲーム中)
-        
-        // v14: AudioContextがrunningであることを確認
-        if (audioCtx && audioCtx.state === 'running') {
+        if (!audioCtx) {
             try {
-                var osc = audioCtx.createOscillator();
-                var gain = audioCtx.createGain();
-                osc.type = 'sawtooth';
-                
-                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
-                
-                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
-                
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.35);
-            } catch(e) {}
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch(e) {
+                return; // AudioContext非対応端末
+            }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+            var promise = audioCtx.resume();
+            if (promise && typeof promise.catch === 'function') {
+                promise.catch(function(){}); // エラーを安全に握り潰す
+            }
         }
     }
 
-    // 2. 走行中BGM (v14：安全性向上)
-    function initBGM() {
-        // ★v14方針：この関数を呼ぶ前（startGame内）で既にensureされている前提
-        ensureAudioContext(); 
+    // 衝突の効果音
+    function playHitSE() {
+        if (!isBgmOn || !audioCtx) return;
+        try {
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            
+            var time = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(150, time);
+            osc.frequency.exponentialRampToValueAtTime(10, time + 0.4);
+            
+            gain.gain.setValueAtTime(0.25, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
+            
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(time); osc.stop(time + 0.4);
+        } catch(e) {}
+    }
+
+    // ドングリ取得の効果音
+    function playAcornSE() {
+        if (!isBgmOn || !audioCtx) return;
+        try {
+            var osc = audioCtx.createOscillator();
+            var gain = audioCtx.createGain();
+            osc.type = 'sine';
+            var time = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(880, time);
+            osc.frequency.setValueAtTime(1200, time + 0.05);
+            gain.gain.setValueAtTime(0.1, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(time); osc.stop(time + 0.2);
+        } catch(e) {}
+    }
+
+    // 結果発表 ファンファーレ (スケジューリング再生で安定動作)
+    function playResultFanfare() {
+        if (!isBgmOn || !audioCtx) return;
         if (bgmTimer) clearInterval(bgmTimer);
-        if (resultBgmTimer) clearInterval(resultBgmTimer);
+
+        var time = audioCtx.currentTime;
+        var melody = [523.25, 523.25, 523.25, 659.25, 783.99, 0, 659.25, 783.99, 1046.50];
+        var duration = [0.15, 0.15, 0.15, 0.3, 0.3, 0.15, 0.15, 0.15, 0.6];
+        var offset = 0;
         
+        for (var i = 0; i < melody.length; i++) {
+            var freq = melody[i];
+            var dur = duration[i];
+            if (freq > 0) {
+                try {
+                    var osc = audioCtx.createOscillator();
+                    var gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.1, time + offset);
+                    gain.gain.exponentialRampToValueAtTime(0.001, time + offset + dur);
+                    osc.connect(gain); gain.connect(audioCtx.destination);
+                    osc.start(time + offset);
+                    osc.stop(time + offset + dur);
+                } catch(e){}
+            }
+            offset += dur;
+        }
+    }
+
+    // 走行中BGM
+    function initBGM() {
+        if (bgmTimer) clearInterval(bgmTimer);
         var notes = [329.63, 392.00, 440.00, 523.25, 587.33, 523.25, 440.00, 392.00, 440.00, 523.25, 659.25, 587.33];
         var bassNotes = [164.81, 164.81, 220.00, 220.00, 174.61, 174.61, 196.00, 196.00];
         var step = 0;
         
         bgmTimer = setInterval(function() {
-            if (!isPlaying || !isBgmOn) return;
-            
-            // v14: 音を鳴らす直前にも安全確認 (インターバル内でのブロックに備える)
-            if (audioCtx && audioCtx.state === 'running') {
-                try {
-                    var osc = audioCtx.createOscillator();
-                    var gain = audioCtx.createGain();
-                    osc.type = 'sawtooth';
-                    osc.frequency.value = notes[step % notes.length];
-                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+            if (!isPlaying || !isBgmOn || !audioCtx) return;
+            try {
+                var time = audioCtx.currentTime;
+                
+                var osc = audioCtx.createOscillator();
+                var gain = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.value = notes[step % notes.length];
+                gain.gain.setValueAtTime(0.03, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(time); osc.stop(time + 0.12);
 
-                    var bass = audioCtx.createOscillator();
-                    var bGain = audioCtx.createGain();
-                    bass.type = 'triangle';
-                    bass.frequency.value = bassNotes[step % bassNotes.length];
-                    bGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                    bGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.13);
-                    bass.connect(bGain); bGain.connect(audioCtx.destination);
-                    bass.start(); bass.stop(audioCtx.currentTime + 0.13);
-                    
-                    step++;
-                } catch(e) {}
-            } else {
-                audioCtx.resume(); // suspendedの場合は再ブロック解除を試みる
-            }
+                var bass = audioCtx.createOscillator();
+                var bGain = audioCtx.createGain();
+                bass.type = 'triangle';
+                bass.frequency.value = bassNotes[step % bassNotes.length];
+                bGain.gain.setValueAtTime(0.06, time);
+                bGain.gain.exponentialRampToValueAtTime(0.001, time + 0.13);
+                bass.connect(bGain); bGain.connect(audioCtx.destination);
+                bass.start(time); bass.stop(time + 0.13);
+                
+                step++;
+            } catch(e) {}
         }, 135);
     }
 
-    // 3. 結果発表表彰ファンファーレBGM (v14：安全性向上)
-    function initResultBGM() {
-        ensureAudioContext(); // 安全対策
-        if (bgmTimer) clearInterval(bgmTimer);
-        if (resultBgmTimer) clearInterval(resultBgmTimer);
-
-        var fanfareMelody = [
-            523.25, 523.25, 523.25, 659.25, 783.99, 0, 659.25, 783.99, 1046.50, 0, 0, 0,
-            698.46, 698.46, 698.46, 880.00, 1046.50, 0, 880.00, 1046.50, 1174.66, 0, 0, 0
-        ];
-        var step = 0;
-
-        resultBgmTimer = setInterval(function() {
-            if (isPlaying || !isBgmOn) return;
-
-            // v14: 音を鳴らす直前にも安全確認
-            if (audioCtx && audioCtx.state === 'running') {
-                try {
-                    var freq = fanfareMelody[step % fanfareMelody.length];
-                    if (freq > 0) {
-                        var osc = audioCtx.createOscillator();
-                        var gain = audioCtx.createGain();
-                        osc.type = 'triangle';
-                        osc.frequency.value = freq;
-                        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
-                        osc.connect(gain); gain.connect(audioCtx.destination);
-                        osc.start(); osc.stop(audioCtx.currentTime + 0.22);
-                    }
-                    step++;
-                } catch(e) {}
-            } else {
-                audioCtx.resume(); // suspendedの場合は再ブロック解除を試みる
-            }
-        }, 160);
-    }
-
     function toggleBGM(e) {
-        if (e) e.preventDefault();
-        
+        if (e && e.cancelable) e.preventDefault();
         isBgmOn = !isBgmOn;
-
-        // ★v14: 音声系の安全な初期化 (ユーザーコンテキスト内)
         ensureAudioContext(); 
-
         var btn = D.getElementById('bgmToggleBtn');
         if (isBgmOn) {
             btn.innerText = "🎵 BGM: ON";
             btn.className = "bgm-btn active";
-            if (!isPlaying) {
-                initResultBGM(); // 結果画面中にONにした場合は表彰BGM開始
-            }
+            if (!isPlaying) playResultFanfare();
         } else {
             btn.innerText = "🔇 BGM: OFF";
             btn.className = "bgm-btn";
         }
     }
 
-    // 画像透過処理
+    // 画像処理周り
     function makeTransparent(img, callback) {
-        var tempC = D.createElement('canvas'); // ★Dを使う
+        var tempC = D.createElement('canvas');
         tempC.width = img.width; tempC.height = img.height;
         var tempCtx = tempC.getContext('2d');
         tempCtx.drawImage(img, 0, 0);
-        
         try {
             var imgData = tempCtx.getImageData(0, 0, tempC.width, tempC.height);
             var data = imgData.data;
             for (var i = 0; i < data.length; i += 4) {
                 var r = data[i], g = data[i+1], b = data[i+2];
-                // 白、チェッカーボードを透明にする
                 if ((r > 190 && g > 190 && b > 190) || (Math.abs(r - g) < 15 && Math.abs(g - b) < 15 && r > 160)) {
                     data[i+3] = 0; 
                 }
@@ -321,7 +310,7 @@
             var newImg = new Image();
             newImg.onload = function() { callback(newImg); };
             newImg.src = tempC.toDataURL();
-        } catch(e) { callback(img); } // CORS等でImageData取得失敗時はそのまま
+        } catch(e) { callback(img); }
     }
 
     var cleanPlayerImg = null;
@@ -333,16 +322,12 @@
     var imgPlayer = new Image();
     imgPlayer.crossOrigin = 'anonymous';
     imgPlayer.src = '1788793264451.png';
-    imgPlayer.onload = function() {
-        makeTransparent(imgPlayer, function(res) { cleanPlayerImg = res; });
-    };
+    imgPlayer.onload = function() { makeTransparent(imgPlayer, function(res) { cleanPlayerImg = res; }); };
 
     var imgAcorn = new Image();
     imgAcorn.crossOrigin = 'anonymous';
     imgAcorn.src = 'image.png';
-    imgAcorn.onload = function() {
-        makeTransparent(imgAcorn, function(res) { cleanAcornImg = res; });
-    };
+    imgAcorn.onload = function() { makeTransparent(imgAcorn, function(res) { cleanAcornImg = res; }); };
 
     imgTitle.onload = function() {
         D.getElementById('start-screen').style.backgroundImage = "url('" + imgTitle.src + "')";
@@ -353,10 +338,9 @@
     };
 
     function startGame(e) {
-        if (e) e.preventDefault();
+        if (e && e.cancelable) e.preventDefault();
         if (isPlaying) return;
 
-        // ★v14: 音声系の安全な初期化 (ユーザーコンテキスト内)
         ensureAudioContext(); 
 
         D.getElementById('start-screen').style.display = 'none';
@@ -374,7 +358,7 @@
         objects = [];
         D.getElementById('score').innerText = score;
 
-        initBGM(); // ★AudioContextがrunningであることを前提にする
+        initBGM();
 
         if (!loopRunning) {
             loopRunning = true;
@@ -383,7 +367,7 @@
     }
 
     function moveLane(dir, e) {
-        if (e) e.preventDefault();
+        if (e && e.cancelable) e.preventDefault();
         if (!isPlaying) return;
         currentLane += dir;
         if (currentLane < 0) currentLane = 0;
@@ -392,7 +376,7 @@
     }
 
     function jumpAction(e) {
-        if (e) e.preventDefault();
+        if (e && e.cancelable) e.preventDefault();
         if (isPlaying && !isJumping) {
             isJumping = true;
             jumpV = -16;
@@ -402,13 +386,13 @@
     function endGame() {
         isPlaying = false;
         loopRunning = false;
+        if (bgmTimer) clearInterval(bgmTimer);
         
-        playHitSE(); // ★衝突効果音再生。このの中でensureされる
+        playHitSE();
 
         if (score > highScore) {
-            // ★v12 -> v14へ最高記録を更新
             highScore = score;
-            localStorage.setItem('acorn_highscore_v14', highScore); 
+            localStorage.setItem('acorn_highscore_v15', highScore);
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -420,10 +404,9 @@
         D.getElementById('mid-score-board').style.display = 'none';
         D.getElementById('result-screen').style.display = 'flex';
 
-        // 100ms後に表彰BGM開始。このの中でensureされる
         setTimeout(function() {
-            initResultBGM();
-        }, 100);
+            playResultFanfare();
+        }, 150);
     }
 
     var timer = 0;
@@ -455,17 +438,14 @@
             }
         }
 
-        // 背景描画
         ctx.fillStyle = '#2d5026'; ctx.fillRect(0, 0, 400, 700);
         ctx.fillStyle = '#9e744a'; ctx.fillRect(50, 0, 300, 700);
         ctx.strokeStyle = '#dca868'; ctx.lineWidth = 4; ctx.strokeRect(50, 0, 300, 700);
 
-        // レーンライン
         ctx.strokeStyle = '#ffeb3b'; ctx.lineWidth = 3; ctx.setLineDash([25, 25]); ctx.lineDashOffset = -bgY;
         ctx.beginPath(); ctx.moveTo(150, 0); ctx.lineTo(150, 700); ctx.moveTo(250, 0); ctx.lineTo(250, 700); ctx.stroke();
         ctx.setLineDash([]);
 
-        // 左右の木製トーチポスト
         var postOffset = bgY % 120;
         for (var pyPos = -100; pyPos < 800; pyPos += 120) {
             var curY = pyPos + postOffset;
@@ -478,7 +458,6 @@
             ctx.fillStyle = '#e8f5e9'; ctx.beginPath(); ctx.arc(377, curY + 8, 4, 0, Math.PI * 2); ctx.fill();
         }
 
-        // オブジェクト処理
         for (var i = objects.length - 1; i >= 0; i--) {
             var o = objects[i];
             o.y += speed;
@@ -491,4 +470,18 @@
                     if (jumpY > -20) { endGame(); return; }
                 } else {
                     score += 10;
-                    const sEl = D.getElementById('score'); if(
+                    D.getElementById('score').innerText = score;
+                    playAcornSE();
+                    objects.splice(i, 1);
+                    continue;
+                }
+            }
+
+            if (o.enemy) {
+                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 20, 36, 10, 0, 0, 6.28); ctx.fill();
+                if (o.type === 0) {
+                    ctx.fillStyle = '#78909c'; ctx.beginPath(); ctx.arc(o.x, o.y, 28, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#455a64'; ctx.beginPath(); ctx.arc(o.x - 6, o.y - 6, 16, 0, Math.PI * 2); ctx.fill();
+                } else if (o.type === 1) {
+                    ctx.fillStyle = '#b0bec5'; ctx.fillRect(o.x - 38, o.y - 12, 76, 24);
+                    ctx.fillStyle = '#d32f2f'; ctx.fillRect(o.x - 32, o.y - 8, 20, 16); ctx.fillRect(o.x + 12, o.
