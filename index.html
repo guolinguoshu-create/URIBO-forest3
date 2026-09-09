@@ -95,7 +95,7 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v30 EVENT BIND FIX</div>
+    <div id="version-tag">v31 SMOOTH UPDATE</div>
 
     <div id="start-screen">
         <button id="startBtn" class="massive-btn">ゲームスタート！</button>
@@ -278,7 +278,6 @@
         }
     }
 
-    // 安全な画像読み込み
     function loadImage(src, callback) {
         var img = new Image();
         img.onload = function() { callback(img); };
@@ -362,26 +361,58 @@
         }, 150);
     }
 
-    // イベントリスナーを確実に登録（スマホのタップ・クリック両対応）
-    function addTapEvent(elemId, func) {
+    /* イベント登録の最適化（重複発火の防止とクリック確実化） */
+    function addBtnClick(elemId, func) {
         var el = D.getElementById(elemId);
         if (!el) return;
         el.addEventListener('click', function(e) {
             func();
-            e.preventDefault();
         });
-        el.addEventListener('touchstart', function(e) {
-            func();
-            e.preventDefault();
-        }, { passive: false });
     }
 
-    addTapEvent('startBtn', startGameForce);
-    addTapEvent('restartBtn', startGameForce);
-    addTapEvent('bgmToggleBtn', toggleBGM);
-    addTapEvent('leftBtn', function() { moveLane(-1); });
-    addTapEvent('jumpBtn', jumpAction);
-    addTapEvent('rightBtn', function() { moveLane(1); });
+    addBtnClick('startBtn', startGameForce);
+    addBtnClick('restartBtn', startGameForce);
+    addBtnClick('bgmToggleBtn', toggleBGM);
+    addBtnClick('leftBtn', function() { moveLane(-1); });
+    addBtnClick('jumpBtn', jumpAction);
+    addBtnClick('rightBtn', function() { moveLane(1); });
+
+    /* PC用キーボード操作対応 */
+    window.addEventListener('keydown', function(e) {
+        if (!isPlaying) return;
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+            moveLane(-1);
+        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            moveLane(1);
+        } else if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w' || e.key === 'W') {
+            jumpAction();
+            e.preventDefault();
+        }
+    });
+
+    /* スマホ画面スワイプ操作対応 */
+    var touchStartX = 0;
+    var touchStartY = 0;
+    canvas.addEventListener('touchstart', function(e) {
+        if (!isPlaying) return;
+        var t = e.touches[0];
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', function(e) {
+        if (!isPlaying) return;
+        var t = e.changedTouches[0];
+        var dx = t.clientX - touchStartX;
+        var dy = t.clientY - touchStartY;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            if (dx < -25) moveLane(-1);
+            else if (dx > 25) moveLane(1);
+        } else {
+            if (dy < -25) jumpAction();
+        }
+    }, { passive: true });
 
     var timer = 0;
     var speedCounter = 0;
@@ -463,24 +494,4 @@
                     ctx.fillStyle = '#5d4037'; ctx.beginPath(); ctx.arc(o.x, o.y, 26, 0, Math.PI * 2); ctx.fill();
                     ctx.beginPath(); ctx.arc(o.x - 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
                     ctx.beginPath(); ctx.arc(o.x + 20, o.y - 18, 10, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(o.x - 8, o.y - 4, 4, 0, Math.PI * 2); ctx.arc(o.x + 8, o.y - 4, 4, 0, Math.PI * 2); ctx.fill();
-                }
-            } else {
-                // ドングリの縮尺修正サイズで描画
-                if (imgAcorn && imgAcorn.complete && imgAcorn.naturalWidth > 0) {
-                    ctx.drawImage(imgAcorn, o.x - 22, o.y - 22, 44, 44);
-                } else {
-                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI * 2); ctx.fill();
-                }
-            }
-            if (o.y > 780) objects.splice(i, 1);
-        }
-
-        var pDrawY = playerY + jumpY;
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 58, 48, 12, 0, 0, 6.28); ctx.fill();
-
-        // プレイヤーの描画
-        if (imgPlayer && imgPlayer.complete && imgPlayer.naturalWidth > 0) {
-            var srcW = imgPlayer.naturalWidth;
-            var srcH = imgPlayer.naturalHeight;
-            ctx.drawImage(imgPlayer, 0, 0, srcW, srcH, playerX - 65, pDrawY - 70
+                    ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ct
