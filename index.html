@@ -95,15 +95,15 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v29 SAFE FIX</div>
+    <div id="version-tag">v30 EVENT BIND FIX</div>
 
     <div id="start-screen">
-        <button class="massive-btn" onclick="startGameForce()">ゲームスタート！</button>
+        <button id="startBtn" class="massive-btn">ゲームスタート！</button>
     </div>
 
     <div id="top-bar">
         <div>黄金ドングリ回収作戦</div>
-        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM()">🎵 BGM: ON</button>
+        <button id="bgmToggleBtn" class="bgm-btn active">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -114,9 +114,9 @@
     </div>
 
     <div id="controls">
-        <button class="ctrl-btn" onclick="moveLane(-1)">◀ 左</button>
-        <button class="ctrl-btn" onclick="jumpAction()">▲ ジャンプ</button>
-        <button class="ctrl-btn" onclick="moveLane(1)">右 ▶</button>
+        <button id="leftBtn" class="ctrl-btn">◀ 左</button>
+        <button id="jumpBtn" class="ctrl-btn">▲ ジャンプ</button>
+        <button id="rightBtn" class="ctrl-btn">右 ▶</button>
     </div>
 
     <div id="result-screen">
@@ -126,7 +126,7 @@
             <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
             <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <button class="massive-btn" onclick="startGameForce()" style="position:relative; z-index:10000; width:88%;">もう一度走る！</button>
+        <button id="restartBtn" class="massive-btn" style="position:relative; z-index:10000; width:88%;">もう一度走る！</button>
     </div>
 </div>
 
@@ -141,7 +141,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v29') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v30') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -278,45 +278,21 @@
         }
     }
 
-    // 安全な画像読み込み・透過処理（エラー時も絶対に止まらない仕様）
-    function loadSafeTransparentImage(src, callback) {
+    // 安全な画像読み込み
+    function loadImage(src, callback) {
         var img = new Image();
-        img.onload = function() {
-            try {
-                var c = document.createElement('canvas');
-                var cx = c.getContext('2d');
-                c.width = img.width;
-                c.height = img.height;
-                cx.drawImage(img, 0, 0);
-                var imgData = cx.getImageData(0, 0, c.width, c.height);
-                var data = imgData.data;
-                for (var i = 0; i < data.length; i += 4) {
-                    var r = data[i], g = data[i+1], b = data[i+2];
-                    if (r > 235 && g > 235 && b > 235) {
-                        data[i+3] = 0;
-                    }
-                }
-                cx.putImageData(imgData, 0, 0);
-                var transImg = new Image();
-                transImg.src = c.toDataURL();
-                callback(transImg);
-            } catch(e) {
-                callback(img); // エラー時は元の画像を使う
-            }
-        };
-        img.onerror = function() {
-            callback(null); // 読み込めなくてもゲームが止まらないようにする
-        };
+        img.onload = function() { callback(img); };
+        img.onerror = function() { callback(null); };
         img.src = src;
     }
 
     var imgPlayer = null;
     var imgAcorn = null;
 
-    loadSafeTransparentImage('1788793264451.png', function(res) { imgPlayer = res; });
-    loadSafeTransparentImage('image.png', function(res) { imgAcorn = res; });
+    loadImage('1788793264451.png', function(res) { imgPlayer = res; });
+    loadImage('image.png', function(res) { imgAcorn = res; });
 
-    window.startGameForce = function() {
+    function startGameForce() {
         safeInitAudio();
 
         var startScreen = D.getElementById('start-screen');
@@ -345,7 +321,7 @@
         }
     }
 
-    window.moveLane = function(dir) {
+    function moveLane(dir) {
         if (!isPlaying) return;
         currentLane += dir;
         if (currentLane < 0) currentLane = 0;
@@ -353,7 +329,7 @@
         targetX = lanes[currentLane];
     }
 
-    window.jumpAction = function() {
+    function jumpAction() {
         if (isPlaying && !isJumping) {
             isJumping = true;
             jumpV = -16;
@@ -369,7 +345,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v29', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v30', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -385,6 +361,27 @@
             playResultFanfare();
         }, 150);
     }
+
+    // イベントリスナーを確実に登録（スマホのタップ・クリック両対応）
+    function addTapEvent(elemId, func) {
+        var el = D.getElementById(elemId);
+        if (!el) return;
+        el.addEventListener('click', function(e) {
+            func();
+            e.preventDefault();
+        });
+        el.addEventListener('touchstart', function(e) {
+            func();
+            e.preventDefault();
+        }, { passive: false });
+    }
+
+    addTapEvent('startBtn', startGameForce);
+    addTapEvent('restartBtn', startGameForce);
+    addTapEvent('bgmToggleBtn', toggleBGM);
+    addTapEvent('leftBtn', function() { moveLane(-1); });
+    addTapEvent('jumpBtn', jumpAction);
+    addTapEvent('rightBtn', function() { moveLane(1); });
 
     var timer = 0;
     var speedCounter = 0;
@@ -469,6 +466,7 @@
                     ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(o.x - 8, o.y - 4, 4, 0, Math.PI * 2); ctx.arc(o.x + 8, o.y - 4, 4, 0, Math.PI * 2); ctx.fill();
                 }
             } else {
+                // ドングリの縮尺修正サイズで描画
                 if (imgAcorn && imgAcorn.complete && imgAcorn.naturalWidth > 0) {
                     ctx.drawImage(imgAcorn, o.x - 22, o.y - 22, 44, 44);
                 } else {
@@ -479,4 +477,10 @@
         }
 
         var pDrawY = playerY + jumpY;
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.e
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 58, 48, 12, 0, 0, 6.28); ctx.fill();
+
+        // プレイヤーの描画
+        if (imgPlayer && imgPlayer.complete && imgPlayer.naturalWidth > 0) {
+            var srcW = imgPlayer.naturalWidth;
+            var srcH = imgPlayer.naturalHeight;
+            ctx.drawImage(imgPlayer, 0, 0, srcW, srcH, playerX - 65, pDrawY - 70
