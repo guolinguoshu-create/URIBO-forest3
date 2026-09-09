@@ -98,15 +98,16 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v39 FIXED</div>
+    <div id="version-tag">v40 DEBUG</div>
 
+    <!-- HTML側に直接 onclick を記述して確実に実行させる -->
     <div id="start-screen">
-        <button id="startBtn" class="massive-btn">ゲームスタート！</button>
+        <button id="startBtn" class="massive-btn" onclick="startGameForce()">ゲームスタート！</button>
     </div>
 
     <div id="top-bar">
         <div>黄金ドングリ回収作戦</div>
-        <button id="bgmToggleBtn" class="bgm-btn active">🎵 BGM: ON</button>
+        <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM()">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -117,9 +118,9 @@
     </div>
 
     <div id="controls">
-        <button id="leftBtn" class="ctrl-btn">◀ 左</button>
-        <button id="jumpBtn" class="ctrl-btn">▲ ジャンプ</button>
-        <button id="rightBtn" class="ctrl-btn">右 ▶</button>
+        <button id="leftBtn" class="ctrl-btn" onclick="moveLane(-1)">◀ 左</button>
+        <button id="jumpBtn" class="ctrl-btn" onclick="jumpAction()">▲ ジャンプ</button>
+        <button id="rightBtn" class="ctrl-btn" onclick="moveLane(1)">右 ▶</button>
     </div>
 
     <div id="result-screen">
@@ -129,7 +130,7 @@
             <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
             <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <button id="restartBtn" class="massive-btn" style="position:relative; z-index:100000; width:88%;">もう一度走る！</button>
+        <button id="restartBtn" class="massive-btn" style="position:relative; z-index:100000; width:88%;" onclick="startGameForce()">もう一度走る！</button>
     </div>
 </div>
 
@@ -144,7 +145,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v39') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v40') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -336,7 +337,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v39', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v40', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -350,26 +351,6 @@
 
         setTimeout(function() { playResultFanfare(); }, 150);
     }
-
-    // すべての環境（click / touchend / pointerdown）で確実に関数が実行されるようにバインド
-    function bindAction(id, func) {
-        var el = D.getElementById(id);
-        if (!el) return;
-        ['pointerdown', 'click', 'touchend'].forEach(function(evt) {
-            el.addEventListener(evt, function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                func();
-            }, { passive: false });
-        });
-    }
-
-    bindAction('startBtn', startGameForce);
-    bindAction('restartBtn', startGameForce);
-    bindAction('bgmToggleBtn', toggleBGM);
-    bindAction('leftBtn', function() { moveLane(-1); });
-    bindAction('jumpBtn', jumpAction);
-    bindAction('rightBtn', function() { moveLane(1); });
 
     window.addEventListener('keydown', function(e) {
         if (!isPlaying) return;
@@ -449,21 +430,18 @@
                 ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 18, 28, 9, 0, 0, 6.28); ctx.fill();
                 
                 if (o.type === 0) {
-                    // 赤い毒キノコ
                     ctx.fillStyle = '#ffffff'; ctx.fillRect(o.x - 6, o.y - 2, 12, 22);
                     ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.arc(o.x, o.y - 8, 22, Math.PI, 0, false); ctx.fill();
                     ctx.fillStyle = '#ffffff';
                     ctx.beginPath(); ctx.arc(o.x - 10, o.y - 12, 4, 0, Math.PI * 2);
                     ctx.arc(o.x + 8, o.y - 14, 5, 0, Math.PI * 2); ctx.fill();
                 } else if (o.type === 1) {
-                    // トゲトゲ岩
                     ctx.fillStyle = '#455a64'; ctx.beginPath(); ctx.arc(o.x, o.y, 20, 0, Math.PI * 2); ctx.fill();
                     ctx.fillStyle = '#ff5722';
                     ctx.beginPath(); ctx.moveTo(o.x, o.y - 26); ctx.lineTo(o.x - 8, o.y - 15); ctx.lineTo(o.x + 8, o.y - 15); ctx.fill();
                     ctx.beginPath(); ctx.moveTo(o.x - 26, o.y); ctx.lineTo(o.x - 15, o.y - 8); ctx.lineTo(o.x - 15, o.y + 8); ctx.fill();
                     ctx.beginPath(); ctx.moveTo(o.x + 26, o.y); ctx.lineTo(o.x + 15, o.y - 8); ctx.lineTo(o.x + 15, o.y + 8); ctx.fill();
                 } else {
-                    // 紫キノコ
                     ctx.fillStyle = '#ffffff'; ctx.fillRect(o.x - 6, o.y - 2, 12, 22);
                     ctx.fillStyle = '#7b1fa2'; ctx.beginPath(); ctx.arc(o.x, o.y - 8, 22, Math.PI, 0, false); ctx.fill();
                     ctx.fillStyle = '#e1bee7';
@@ -477,4 +455,19 @@
                     ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI * 2); ctx.fill();
                 }
             }
-            if (o.y > 780) objects.splice(i, 
+            if (o.y > 780) objects.splice(i, 1);
+        }
+
+        // --- プレイヤー描画 ---
+        var pDrawY = playerY + jumpY;
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 38, 10, 0, 0, 6.28); ctx.fill();
+
+        if (imgPlayer && imgPlayer.complete && imgPlayer.naturalWidth > 0) {
+            ctx.drawImage(imgPlayer, playerX - 45, pDrawY - 50, 90, 75);
+        } else {
+            ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 20, 26, 0, Math.PI*2); ctx.fill();
+        }
+
+        if (speedUpNotifyTimer > 0) {
+            speedUpNotifyTimer--;
+            ctx.fillStyle = 'rgba(255, 215, 0,
