@@ -51,22 +51,22 @@
 
         /* スコアエリア */
         #mid-score-board {
-            position: absolute; bottom: 105px; left: 12px; right: 12px;
-            background: rgba(15, 25, 15, 0.85); border: 2px solid #ffd700; border-radius: 14px;
-            display: none; justify-content: space-around; align-items: center; padding: 8px 0;
+            position: absolute; bottom: 125px; left: 16px; right: 16px;
+            background: rgba(15, 25, 15, 0.9); border: 2px solid #ffd700; border-radius: 14px;
+            display: none; justify-content: space-around; align-items: center; padding: 10px 0;
             color: #ffffff; font-size: 15px; font-weight: bold; z-index: 40;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
-        /* 操作ボタン（下すぎないように位置を修正） */
+        /* 操作ボタン */
         #controls {
-            position: absolute; bottom: 25px; left: 12px; right: 12px; display: none;
-            justify-content: space-between; gap: 8px; z-index: 40;
+            position: absolute; bottom: 50px; left: 16px; right: 16px; display: none;
+            justify-content: space-between; gap: 12px; z-index: 40;
         }
         .ctrl-btn {
-            flex: 1; padding: 14px 0; background: linear-gradient(180deg, #a06836, #5c3818);
+            flex: 1; padding: 16px 0; background: linear-gradient(180deg, #a06836, #5c3818);
             border: 2px solid #ffd700; border-radius: 16px; color: #ffffff; font-weight: bold;
-            font-size: 16px; text-align: center; box-shadow: 0 5px 12px rgba(0,0,0,0.5);
+            font-size: 18px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.6);
             cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; font-family: inherit;
         }
         .ctrl-btn:active { background: #5c3818; transform: translateY(2px); }
@@ -95,7 +95,7 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v27 TRANSPARENT & CEREMONY</div>
+    <div id="version-tag">v29 SAFE FIX</div>
 
     <div id="start-screen">
         <button class="massive-btn" onclick="startGameForce()">ゲームスタート！</button>
@@ -141,7 +141,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v27') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v29') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -206,13 +206,11 @@
         } catch(e) {}
     }
 
-    // 表彰式らしい豪華で厳かなファンファーレBGM
     function playResultFanfare() {
         if (!isBgmOn || !audioCtx) return;
         if (bgmTimer) clearInterval(bgmTimer);
         try {
             var time = audioCtx.currentTime;
-            // 表彰式風のファンファーレ音階 (ド・ミ・ソ・高いド、など)
             var melody = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
             var duration = [0.2, 0.2, 0.2, 0.4, 0.2, 0.8];
             var offset = 0;
@@ -280,22 +278,20 @@
         }
     }
 
-    // 白背景を自動で透過させる関数
-    function createTransparentImage(src, callback) {
+    // 安全な画像読み込み・透過処理（エラー時も絶対に止まらない仕様）
+    function loadSafeTransparentImage(src, callback) {
         var img = new Image();
-        img.src = src;
         img.onload = function() {
-            var c = document.createElement('canvas');
-            var cx = c.getContext('2d');
-            c.width = img.width;
-            c.height = img.height;
-            cx.drawImage(img, 0, 0);
             try {
+                var c = document.createElement('canvas');
+                var cx = c.getContext('2d');
+                c.width = img.width;
+                c.height = img.height;
+                cx.drawImage(img, 0, 0);
                 var imgData = cx.getImageData(0, 0, c.width, c.height);
                 var data = imgData.data;
                 for (var i = 0; i < data.length; i += 4) {
                     var r = data[i], g = data[i+1], b = data[i+2];
-                    // 白っぽい部分（RGBすべて235以上）を透明に変換
                     if (r > 235 && g > 235 && b > 235) {
                         data[i+3] = 0;
                     }
@@ -303,21 +299,22 @@
                 cx.putImageData(imgData, 0, 0);
                 var transImg = new Image();
                 transImg.src = c.toDataURL();
-                transImg.onload = function() {
-                    callback(transImg);
-                };
+                callback(transImg);
             } catch(e) {
-                callback(img);
+                callback(img); // エラー時は元の画像を使う
             }
         };
+        img.onerror = function() {
+            callback(null); // 読み込めなくてもゲームが止まらないようにする
+        };
+        img.src = src;
     }
 
     var imgPlayer = null;
     var imgAcorn = null;
 
-    // 画像のロードと透過処理の適用
-    createTransparentImage('1788793264451.png', function(res) { imgPlayer = res; });
-    createTransparentImage('image.png', function(res) { imgAcorn = res; });
+    loadSafeTransparentImage('1788793264451.png', function(res) { imgPlayer = res; });
+    loadSafeTransparentImage('image.png', function(res) { imgAcorn = res; });
 
     window.startGameForce = function() {
         safeInitAudio();
@@ -372,7 +369,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v27', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v29', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -472,11 +469,14 @@
                     ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(o.x - 8, o.y - 4, 4, 0, Math.PI * 2); ctx.arc(o.x + 8, o.y - 4, 4, 0, Math.PI * 2); ctx.fill();
                 }
             } else {
-                // ドングリの縮尺修正＆透過描画
                 if (imgAcorn && imgAcorn.complete && imgAcorn.naturalWidth > 0) {
                     ctx.drawImage(imgAcorn, o.x - 22, o.y - 22, 44, 44);
                 } else {
                     ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI * 2); ctx.fill();
                 }
             }
-            if (o.y > 780) objects.splice(i, 
+            if (o.y > 780) objects.splice(i, 1);
+        }
+
+        var pDrawY = playerY + jumpY;
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.e
