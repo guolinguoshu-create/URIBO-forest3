@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>黄金ドングリを集め出せ！</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         html, body {
             background-color: #111a11; display: flex; justify-content: center; align-items: center;
             height: 100%; height: 100dvh; font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden;
@@ -31,7 +31,7 @@
             border: 3px solid #ffffff; border-radius: 40px; color: #1a0000; font-size: 22px; font-weight: bold;
             box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 100000; cursor: pointer; text-align: center;
             text-shadow: 0 1px 0 rgba(255,255,255,0.6); outline: none; -webkit-tap-highlight-color: transparent;
-            font-family: inherit;
+            font-family: inherit; touch-action: manipulation;
         }
         .massive-btn:active { transform: scale(0.96); background: linear-gradient(180deg, #ddcc00, #dd6600); }
 
@@ -45,11 +45,11 @@
         .bgm-btn {
             background: linear-gradient(180deg, #444, #222); border: 1.5px solid #ffd700; color: #ffd700;
             padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;
-            outline: none; font-family: inherit;
+            outline: none; font-family: inherit; touch-action: manipulation;
         }
         .bgm-btn.active { background: linear-gradient(180deg, #ff8800, #cc5500); color: #fff; }
 
-        canvas { width: 100%; height: 100%; display: block; z-index: 10; }
+        canvas { width: 100%; height: 100%; display: block; z-index: 10; touch-action: none; }
 
         /* スコアエリア */
         #mid-score-board {
@@ -70,6 +70,7 @@
             border: 2px solid #ffd700; border-radius: 16px; color: #ffffff; font-weight: bold;
             font-size: 18px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.6);
             cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; font-family: inherit;
+            touch-action: manipulation;
         }
         .ctrl-btn:active { background: #5c3818; transform: translateY(2px); }
 
@@ -97,7 +98,7 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v38 FIXED</div>
+    <div id="version-tag">v39 FIXED</div>
 
     <div id="start-screen">
         <button id="startBtn" class="massive-btn">ゲームスタート！</button>
@@ -143,7 +144,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v38') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v39') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -258,7 +259,6 @@
         btn.className = isBgmOn ? "bgm-btn active" : "bgm-btn";
     }
 
-    // 白背景を綺麗に透明化する関数
     function makeTransparentImage(src) {
         var img = new Image();
         img.src = src;
@@ -336,7 +336,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v38', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v39', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -351,16 +351,19 @@
         setTimeout(function() { playResultFanfare(); }, 150);
     }
 
+    // すべての環境（click / touchend / pointerdown）で確実に関数が実行されるようにバインド
     function bindAction(id, func) {
         var el = D.getElementById(id);
         if (!el) return;
-        el.addEventListener('pointerdown', function(e) {
-            e.preventDefault();
-            func();
+        ['pointerdown', 'click', 'touchend'].forEach(function(evt) {
+            el.addEventListener(evt, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                func();
+            }, { passive: false });
         });
     }
 
-    // ボタンのみでスタートするように修正
     bindAction('startBtn', startGameForce);
     bindAction('restartBtn', startGameForce);
     bindAction('bgmToggleBtn', toggleBGM);
@@ -468,17 +471,10 @@
                     ctx.arc(o.x + 9, o.y - 10, 4, 0, Math.PI * 2); ctx.fill();
                 }
             } else {
-                // ドングリ（透過＆サイズ調整済み）
                 if (imgAcorn && imgAcorn.complete && imgAcorn.naturalWidth > 0) {
                     ctx.drawImage(imgAcorn, o.x - 18, o.y - 18, 36, 36);
                 } else {
                     ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI * 2); ctx.fill();
                 }
             }
-            if (o.y > 780) objects.splice(i, 1);
-        }
-
-        // --- プレイヤー描画（透過＆サイズ調整済み） ---
-        var pDrawY = playerY + jumpY;
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 38, 10, 0, 0, 6.28); ctx.fill();
-
+            if (o.y > 780) objects.splice(i, 
