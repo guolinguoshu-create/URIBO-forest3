@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>黄金ドングリ回収作戦</title>
+    <title>黄金ドングリ回収作戦 - 逃走編</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         html, body {
@@ -14,123 +14,142 @@
         #game-container {
             position: relative; width: 100vw; max-width: 420px; 
             height: 100%; height: 100dvh; max-height: 800px;
-            background: #1b4d3e; box-shadow: 0 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column; overflow: hidden;
+            background: #1b4d3e; box-shadow: 0 0 40px rgba(0,0,0,0.9); display: flex; flex-direction: column; overflow: hidden;
         }
         
-        /* スタート画面 */
+        /* スタート画面：世界観を凝縮 */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #113322 0%, #1b4d3e 100%);
+            background: radial-gradient(circle, #224d38 0%, #0d2218 100%);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 20px; z-index: 99999; text-align: center;
+            padding: 24px; z-index: 99999; text-align: center;
+        }
+        .wanted-badge {
+            background: #ffd700; color: #1a0000; font-weight: 900; font-size: 12px;
+            padding: 4px 14px; border-radius: 20px; margin-bottom: 12px;
+            box-shadow: 0 2px 10px rgba(255,215,0,0.4); letter-spacing: 2px;
         }
         .title-logo {
-            font-size: 30px; font-weight: 900; color: #ffd700; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            margin-bottom: 10px;
+            font-size: 28px; font-weight: 900; color: #ffd700; text-shadow: 3px 3px 0px #78350f, 0 0 20px rgba(255,215,0,0.5);
+            margin-bottom: 8px; line-height: 1.3;
         }
         .title-sub {
-            font-size: 14px; color: #aaddcc; margin-bottom: 35px; font-weight: bold;
+            font-size: 13px; color: #a7f3d0; margin-bottom: 30px; font-weight: bold;
+            background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 12px; border: 1px dashed #34d399;
         }
         .massive-btn {
-            width: 85%; padding: 18px; background: linear-gradient(180deg, #ffe600, #ff8800);
-            border: 3px solid #ffffff; border-radius: 40px; color: #1a0000; font-size: 22px; font-weight: bold;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 100000; cursor: pointer; text-align: center;
+            width: 88%; padding: 18px; background: linear-gradient(180deg, #fde047, #f59e0b);
+            border: 3px solid #ffffff; border-radius: 40px; color: #451a03; font-size: 20px; font-weight: 900;
+            box-shadow: 0 8px 25px rgba(245,158,11,0.5); z-index: 100000; cursor: pointer; text-align: center;
             text-shadow: 0 1px 0 rgba(255,255,255,0.6); outline: none; -webkit-tap-highlight-color: transparent;
-            font-family: inherit; touch-action: manipulation;
+            font-family: inherit; touch-action: manipulation; transition: transform 0.1s;
         }
-        .massive-btn:active { transform: scale(0.96); background: linear-gradient(180deg, #ddcc00, #dd6600); }
+        .massive-btn:active { transform: scale(0.95); background: linear-gradient(180deg, #facc15, #d97706); }
 
         /* トップバー */
         #top-bar {
-            position: absolute; top: 12px; left: 12px; right: 12px; height: 40px;
-            background: rgba(20, 35, 20, 0.85); border: 2px solid #ffd700; border-radius: 12px;
+            position: absolute; top: 12px; left: 12px; right: 12px; height: 42px;
+            background: rgba(15, 23, 15, 0.9); border: 2px solid #ffd700; border-radius: 12px;
             display: flex; justify-content: space-between; align-items: center; padding: 0 12px;
             color: #ffffff; font-size: 13px; font-weight: bold; z-index: 20;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
         .bgm-btn {
-            background: linear-gradient(180deg, #444, #222); border: 1.5px solid #ffd700; color: #ffd700;
+            background: linear-gradient(180deg, #374151, #1f2937); border: 1.5px solid #ffd700; color: #ffd700;
             padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer;
             outline: none; font-family: inherit; touch-action: manipulation;
         }
-        .bgm-btn.active { background: linear-gradient(180deg, #ff8800, #cc5500); color: #fff; }
+        .bgm-btn.active { background: linear-gradient(180deg, #d97706, #b45309); color: #fff; }
 
         canvas { width: 100%; height: 100%; display: block; z-index: 10; touch-action: none; }
 
-        /* スコアエリア */
+        /* スコアボード */
         #mid-score-board {
             position: absolute; bottom: 120px; left: 16px; right: 16px;
-            background: rgba(15, 25, 15, 0.9); border: 2px solid #ffd700; border-radius: 14px;
+            background: rgba(15, 23, 15, 0.92); border: 2px solid #ffd700; border-radius: 14px;
             display: none; justify-content: space-around; align-items: center; padding: 10px 0;
-            color: #ffffff; font-size: 15px; font-weight: bold; z-index: 40;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            color: #ffffff; font-size: 14px; font-weight: bold; z-index: 40;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
         }
 
         /* 操作ボタン */
         #controls {
-            position: absolute; bottom: 40px; left: 16px; right: 16px; display: none;
+            position: absolute; bottom: 35px; left: 16px; right: 16px; display: none;
             justify-content: space-between; gap: 12px; z-index: 40;
         }
         .ctrl-btn {
-            flex: 1; padding: 16px 0; background: linear-gradient(180deg, #a06836, #5c3818);
+            flex: 1; padding: 16px 0; background: linear-gradient(180deg, #9a3412, #7c2d12);
             border: 2px solid #ffd700; border-radius: 16px; color: #ffffff; font-weight: bold;
-            font-size: 18px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+            font-size: 17px; text-align: center; box-shadow: 0 6px 15px rgba(0,0,0,0.6);
             cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; font-family: inherit;
             touch-action: manipulation;
         }
-        .ctrl-btn:active { background: #5c3818; transform: translateY(2px); }
+        .ctrl-btn:active { background: #7c2d12; transform: translateY(2px); }
 
-        /* 結果発表画面 */
+        /* 結果画面（表彰式・裁判モード） */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #113322 0%, #1b4d3e 100%);
+            background: radial-gradient(circle, #224d38 0%, #0d2218 100%);
             display: none; flex-direction: column; justify-content: center; align-items: center;
             padding: 20px; z-index: 99999; text-align: center;
         }
         .result-board {
-            background: rgba(20, 30, 20, 0.92); border: 3px solid #ffd700; border-radius: 20px;
-            padding: 20px; width: 90%; text-align: center; color: #ffffff; margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            background: rgba(13, 27, 18, 0.95); border: 3px solid #ffd700; border-radius: 20px;
+            padding: 22px 16px; width: 90%; text-align: center; color: #ffffff; margin-bottom: 20px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.8);
         }
-        #version-tag { position: absolute; top: 60px; left: 14px; color: #ffd700; font-size: 11px; z-index: 100000; font-weight: bold; }
+        #version-tag { position: absolute; top: 62px; left: 14px; color: #ffd700; font-size: 10px; z-index: 100000; font-weight: bold; opacity: 0.8; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v41 STANDALONE</div>
+    <div id="version-tag">v43 ASSET-EDITION</div>
 
+    <!-- スタート画面 -->
     <div id="start-screen">
+        <div class="wanted-badge">指名手配 / 森林警察警戒中</div>
         <div class="title-logo">🌰 黄金ドングリ回収作戦 🌰</div>
-        <div class="title-sub">どんぐりを大量無許可占有して逃走せよ！</div>
+        <div class="title-sub">どんぐりを大量無許可占有して警察の包囲網を突破せよ！</div>
         <button id="startBtn" class="massive-btn" onclick="startGameForce()">ゲームスタート！</button>
     </div>
 
+    <!-- トップバー -->
     <div id="top-bar">
-        <div>黄金ドングリ回収作戦</div>
+        <div>🐿️ 逃走経路：森の小道</div>
         <button id="bgmToggleBtn" class="bgm-btn active" onclick="toggleBGM()">🎵 BGM: ON</button>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
+    <!-- スコア表示 -->
     <div id="mid-score-board">
-        <div>ドングリ: <span id="score" style="color:#ffd700; font-size:20px;">0</span></div>
-        <div>最高記録: <span id="high-score" style="color:#ffffff; font-size:18px;">0</span></div>
+        <div>回収数: <span id="score" style="color:#ffd700; font-size:20px;">0</span></div>
+        <div>自己ベスト: <span id="high-score" style="color:#ffffff; font-size:18px;">0</span></div>
     </div>
 
+    <!-- 操作ボタン -->
     <div id="controls">
-        <button id="leftBtn" class="ctrl-btn" onclick="moveLane(-1)">◀ 左</button>
+        <button id="leftBtn" class="ctrl-btn" onclick="moveLane(-1)">◀ 左避</button>
         <button id="jumpBtn" class="ctrl-btn" onclick="jumpAction()">▲ ジャンプ</button>
-        <button id="rightBtn" class="ctrl-btn" onclick="moveLane(1)">右 ▶</button>
+        <button id="rightBtn" class="ctrl-btn" onclick="moveLane(1)">右避 ▶</button>
     </div>
 
+    <!-- 結果画面（表彰式 / 罪状発表） -->
     <div id="result-screen">
         <div class="result-board">
-            <div style="font-size: 22px; color: #ffd700; font-weight: bold; margin-bottom: 10px;">🏆 栄光の表彰式 🏆</div>
-            <p style="font-size:15px;">押収ドングリ: <span id="res-score" style="font-size:32px; color:#ffd700; font-weight:bold;">0</span> 個</p>
-            <div id="res-rank" style="font-size: 55px; color: #ff3333; font-weight: bold; margin: 5px 0;">S</div>
-            <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 6px; border-radius: 6px; font-weight:bold; margin-top:10px;">罪状：どんぐり大量無許可占有罪</p>
+            <div style="font-size: 21px; color: #ffd700; font-weight: bold; margin-bottom: 8px; text-shadow: 1px 1px 2px #000;">🏆 栄光の表彰式 🏆</div>
+            <p style="font-size:14px; color:#e5e7eb;">押収された黄金ドングリ</p>
+            <p style="font-size:32px; color:#ffd700; font-weight:bold; margin: 4px 0;"><span id="res-score">0</span> 個</p>
+            <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin: 10px 0;">
+                <span style="font-size:14px; font-weight:bold;">評価ランク:</span>
+                <span id="res-rank" style="font-size: 42px; color: #ef4444; font-weight: 900; text-shadow: 2px 2px 0 #000;">S</span>
+            </div>
+            <div style="font-size: 11px; color: #fca5a5; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); padding: 8px; border-radius: 8px; font-weight:bold; margin-top:8px;">
+                🚨 罪状：どんぐり大量無許可占有罪 🚨
+            </div>
         </div>
-        <button id="restartBtn" class="massive-btn" onclick="startGameForce()">もう一度走る！</button>
+        <button id="restartBtn" class="massive-btn" onclick="startGameForce()">もう一度逃走する！</button>
     </div>
 </div>
 
@@ -140,12 +159,18 @@
     var ctx = canvas.getContext('2d');
     canvas.width = 400; canvas.height = 700;
 
+    // --- 画像アセットの読み込み ---
+    var imgPlayer = new Image(); imgPlayer.src = 'image.png';
+    var imgAcorn = new Image(); imgAcorn.src = '1788703217973.png';
+    var imgPolice = new Image(); imgPolice.src = '1788703264451.png';
+    var imgObstacle = new Image(); imgObstacle.src = '1788702691552.png';
+
     var isPlaying = false;
     var loopRunning = false;
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v41') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v43') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -309,7 +334,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v41', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v43', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -350,8 +375,8 @@
         timer++;
         if (timer > 20) {
             var lane = Math.floor(Math.random() * 3);
-            var isEnemy = Math.random() < 0.45;
-            var enemyType = Math.floor(Math.random() * 3);
+            var isEnemy = Math.random() < 0.48;
+            var enemyType = Math.floor(Math.random() * 2);
             objects.push({ x: lanes[lane], y: -60, enemy: isEnemy, type: enemyType });
             timer = 0;
             speed += 0.008;
@@ -359,7 +384,7 @@
             if (speedCounter % 35 === 0) speedUpNotifyTimer = 40;
         }
 
-        // --- 背景描画 ---
+        // --- 背景描画（森の小道） ---
         ctx.fillStyle = '#1b4d3e'; ctx.fillRect(0, 0, 400, 700);
 
         // 小道
@@ -399,65 +424,51 @@
             }
 
             if (o.enemy) {
-                // 障害物/敵（Canvasで描画）
+                // 警察風障害物（画像が読み込まれていれば画像を使用、未ロード時は図形フォールバック）
                 ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 18, 28, 9, 0, 0, 6.28); ctx.fill();
                 
-                if (o.type === 0) {
-                    ctx.fillStyle = '#ffffff'; ctx.fillRect(o.x - 6, o.y - 2, 12, 22);
-                    ctx.fillStyle = '#d32f2f'; ctx.beginPath(); ctx.arc(o.x, o.y - 8, 22, Math.PI, 0, false); ctx.fill();
-                    ctx.fillStyle = '#ffffff';
-                    ctx.beginPath(); ctx.arc(o.x - 10, o.y - 12, 4, 0, Math.PI * 2);
-                    ctx.arc(o.x + 8, o.y - 14, 5, 0, Math.PI * 2); ctx.fill();
-                } else if (o.type === 1) {
-                    ctx.fillStyle = '#455a64'; ctx.beginPath(); ctx.arc(o.x, o.y, 20, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#ff5722';
-                    ctx.beginPath(); ctx.moveTo(o.x, o.y - 26); ctx.lineTo(o.x - 8, o.y - 15); ctx.lineTo(o.x + 8, o.y - 15); ctx.fill();
+                var policeImg = (o.type === 0) ? imgPolice : imgObstacle;
+                if (policeImg && policeImg.complete && policeImg.naturalWidth > 0) {
+                    ctx.drawImage(policeImg, o.x - 24, o.y - 24, 48, 48);
                 } else {
-                    ctx.fillStyle = '#ffffff'; ctx.fillRect(o.x - 6, o.y - 2, 12, 22);
-                    ctx.fillStyle = '#7b1fa2'; ctx.beginPath(); ctx.arc(o.x, o.y - 8, 22, Math.PI, 0, false); ctx.fill();
+                    // フォールバック描画
+                    ctx.fillStyle = '#b91c1c'; ctx.fillRect(o.x - 24, o.y - 12, 48, 24);
                 }
             } else {
-                // ドングリ（Canvasで描画）
+                // ドングリ（画像が読み込まれていれば画像を使用）
                 ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 16, 14, 6, 0, 0, 6.28); ctx.fill();
-                ctx.fillStyle = '#8d5524'; ctx.beginPath(); ctx.arc(o.x, o.y - 4, 12, Math.PI, 0, false); ctx.fill();
-                ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y + 4, 13, 0, Math.PI, false); ctx.fill();
-                ctx.fillStyle = '#ffee55'; ctx.beginPath(); ctx.arc(o.x - 3, o.y + 2, 4, 0, Math.PI * 2); ctx.fill();
+                
+                if (imgAcorn && imgAcorn.complete && imgAcorn.naturalWidth > 0) {
+                    ctx.drawImage(imgAcorn, o.x - 18, o.y - 18, 36, 36);
+                } else {
+                    // フォールバック描画
+                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 14, 0, Math.PI * 2); ctx.fill();
+                }
             }
             if (o.y > 780) objects.splice(i, 1);
         }
 
-        // --- プレイヤー描画（Canvasで可愛いリス風キャラを描画） ---
+        // --- 主人公（リスの逃走キャラ）描画 ---
         var pDrawY = playerY + jumpY;
         ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 38, 10, 0, 0, 6.28); ctx.fill();
 
-        // 体
-        ctx.fillStyle = '#d97706'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 10, 26, 0, Math.PI * 2); ctx.fill();
-        // 耳
-        ctx.beginPath(); ctx.arc(playerX - 16, pDrawY - 32, 9, 0, Math.PI * 2);
-        ctx.arc(playerX + 16, pDrawY - 32, 9, 0, Math.PI * 2); ctx.fill();
-        // 耳の中
-        ctx.fillStyle = '#fde68a';
-        ctx.beginPath(); ctx.arc(playerX - 16, pDrawY - 32, 5, 0, Math.PI * 2);
-        ctx.arc(playerX + 16, pDrawY - 32, 5, 0, Math.PI * 2); ctx.fill();
-        // 顔
-        ctx.fillStyle = '#fef3c7'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 2, 16, 0, Math.PI * 2); ctx.fill();
-        // 目
-        ctx.fillStyle = '#111827';
-        ctx.beginPath(); ctx.arc(playerX - 7, pDrawY - 12, 3.5, 0, Math.PI * 2);
-        ctx.arc(playerX + 7, pDrawY - 12, 3.5, 0, Math.PI * 2); ctx.fill();
-        // 鼻
-        ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 6, 2, 0, Math.PI * 2); ctx.fill();
+        if (imgPlayer && imgPlayer.complete && imgPlayer.naturalWidth > 0) {
+            ctx.drawImage(imgPlayer, playerX - 28, pDrawY - 28, 56, 56);
+        } else {
+            // フォールバック描画（リス風）
+            ctx.fillStyle = '#d97706'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 10, 26, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fef3c7'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 2, 16, 0, Math.PI * 2); ctx.fill();
+        }
 
         if (speedUpNotifyTimer > 0) {
             speedUpNotifyTimer--;
             ctx.fillStyle = 'rgba(255, 215, 0, 0.95)';
-            ctx.font = '900 24px sans-serif';
+            ctx.font = '900 22px sans-serif';
             ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
-            ctx.strokeText('⚡ SPEED UP! ⚡', 200, 260); ctx.fillText('⚡ SPEED UP! ⚡', 200, 260);
+            ctx.strokeText('⚡ 警察の包囲網加速！ ⚡', 200, 260); ctx.fillText('⚡ 警察の包囲網加速！ ⚡', 200, 260);
         }
         if (isPlaying) requestAnimationFrame(gameLoop);
     }
 </script>
 </body>
 </html>
-
