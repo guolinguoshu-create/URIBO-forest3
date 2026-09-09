@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>黄金ドングリを集め出せ！</title>
+    <title>黄金ドングリ回収作戦</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         html, body {
-            background-color: #111a11; display: flex; justify-content: center; align-items: center;
+            background-color: #0b130b; display: flex; justify-content: center; align-items: center;
             height: 100%; height: 100dvh; font-family: 'Helvetica Neue', Arial, sans-serif; overflow: hidden;
             overscroll-behavior-y: none;
         }
@@ -20,11 +20,16 @@
         /* スタート画面 */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #1b4d3e;
-            background-image: url('1788702691552.png');
-            background-size: cover; background-position: center;
-            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 14dvh; z-index: 99999;
+            background: linear-gradient(135deg, #113322 0%, #1b4d3e 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 20px; z-index: 99999; text-align: center;
+        }
+        .title-logo {
+            font-size: 30px; font-weight: 900; color: #ffd700; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            margin-bottom: 10px;
+        }
+        .title-sub {
+            font-size: 14px; color: #aaddcc; margin-bottom: 35px; font-weight: bold;
         }
         .massive-btn {
             width: 85%; padding: 18px; background: linear-gradient(180deg, #ffe600, #ff8800);
@@ -77,20 +82,14 @@
         /* 結果発表画面 */
         #result-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #1b4d3e;
-            background-image: url('1788793217973.png');
-            background-size: cover; background-position: center;
-            display: none; flex-direction: column; justify-content: flex-start; align-items: center;
-            padding-top: 45px; z-index: 99999;
-        }
-        #result-screen::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.25); z-index: 1;
+            background: linear-gradient(135deg, #113322 0%, #1b4d3e 100%);
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            padding: 20px; z-index: 99999; text-align: center;
         }
         .result-board {
-            position: relative; background: rgba(20, 30, 20, 0.92); border: 3px solid #ffd700; border-radius: 20px;
-            padding: 18px 16px; width: 88%; text-align: center; color: #ffffff; margin-bottom: 20px; z-index: 2;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(3px);
+            background: rgba(20, 30, 20, 0.92); border: 3px solid #ffd700; border-radius: 20px;
+            padding: 20px; width: 90%; text-align: center; color: #ffffff; margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
         }
         #version-tag { position: absolute; top: 60px; left: 14px; color: #ffd700; font-size: 11px; z-index: 100000; font-weight: bold; }
     </style>
@@ -98,10 +97,11 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v40 DEBUG</div>
+    <div id="version-tag">v41 STANDALONE</div>
 
-    <!-- HTML側に直接 onclick を記述して確実に実行させる -->
     <div id="start-screen">
+        <div class="title-logo">🌰 黄金ドングリ回収作戦 🌰</div>
+        <div class="title-sub">どんぐりを大量無許可占有して逃走せよ！</div>
         <button id="startBtn" class="massive-btn" onclick="startGameForce()">ゲームスタート！</button>
     </div>
 
@@ -125,12 +125,12 @@
 
     <div id="result-screen">
         <div class="result-board">
-            <div style="font-size: 22px; color: #ffd700; font-weight: bold; text-shadow: 1px 1px 3px #000;">🏆 栄光の表彰式 🏆</div>
-            <p style="margin-top:8px; font-size:15px;">押収ドングリ: <span id="res-score" style="font-size:30px; color:#ffd700; font-weight:bold;">0</span> 個</p>
-            <div id="res-rank" style="font-size: 50px; color: #ff3333; font-weight: bold; margin: 2px 0; text-shadow: 2px 2px 0 #000;">S</div>
-            <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 5px; border-radius: 6px; font-weight:bold;">罪状：どんぐり大量無許可占有罪</p>
+            <div style="font-size: 22px; color: #ffd700; font-weight: bold; margin-bottom: 10px;">🏆 栄光の表彰式 🏆</div>
+            <p style="font-size:15px;">押収ドングリ: <span id="res-score" style="font-size:32px; color:#ffd700; font-weight:bold;">0</span> 個</p>
+            <div id="res-rank" style="font-size: 55px; color: #ff3333; font-weight: bold; margin: 5px 0;">S</div>
+            <p style="font-size: 12px; color: #ffdddd; background: rgba(255,0,0,0.3); padding: 6px; border-radius: 6px; font-weight:bold; margin-top:10px;">罪状：どんぐり大量無許可占有罪</p>
         </div>
-        <button id="restartBtn" class="massive-btn" style="position:relative; z-index:100000; width:88%;" onclick="startGameForce()">もう一度走る！</button>
+        <button id="restartBtn" class="massive-btn" onclick="startGameForce()">もう一度走る！</button>
     </div>
 </div>
 
@@ -145,7 +145,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v40') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v41') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -260,34 +260,6 @@
         btn.className = isBgmOn ? "bgm-btn active" : "bgm-btn";
     }
 
-    function makeTransparentImage(src) {
-        var img = new Image();
-        img.src = src;
-        img.onload = function() {
-            try {
-                var c = document.createElement('canvas');
-                var cx = c.getContext('2d');
-                c.width = img.naturalWidth;
-                c.height = img.naturalHeight;
-                cx.drawImage(img, 0, 0);
-                var imgData = cx.getImageData(0, 0, c.width, c.height);
-                var data = imgData.data;
-                for (var i = 0; i < data.length; i += 4) {
-                    var r = data[i], g = data[i+1], b = data[i+2];
-                    if (r > 210 && g > 210 && b > 210) {
-                        data[i+3] = 0;
-                    }
-                }
-                cx.putImageData(imgData, 0, 0);
-                img.src = c.toDataURL();
-            } catch(e) {}
-        };
-        return img;
-    }
-
-    var imgPlayer = makeTransparentImage('1788793264451.png');
-    var imgAcorn = makeTransparentImage('image.png');
-
     function startGameForce() {
         safeInitAudio();
         isPlaying = true;
@@ -337,7 +309,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v40', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v41', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -387,14 +359,14 @@
             if (speedCounter % 35 === 0) speedUpNotifyTimer = 40;
         }
 
-        // --- 森の背景描画 ---
+        // --- 背景描画 ---
         ctx.fillStyle = '#1b4d3e'; ctx.fillRect(0, 0, 400, 700);
 
-        // 森の小道
+        // 小道
         ctx.fillStyle = '#5c4033'; ctx.fillRect(45, 0, 310, 700);
         ctx.strokeStyle = '#3d2817'; ctx.lineWidth = 4; ctx.strokeRect(45, 0, 310, 700);
 
-        // 左右の木々スクロール
+        // 左右の木々
         ctx.fillStyle = '#14382c';
         for (var py = -140 + bgY; py < 700; py += 140) {
             ctx.beginPath(); ctx.arc(22, py, 35, 0, Math.PI * 2); ctx.fill();
@@ -427,6 +399,7 @@
             }
 
             if (o.enemy) {
+                // 障害物/敵（Canvasで描画）
                 ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 18, 28, 9, 0, 0, 6.28); ctx.fill();
                 
                 if (o.type === 0) {
@@ -439,35 +412,52 @@
                     ctx.fillStyle = '#455a64'; ctx.beginPath(); ctx.arc(o.x, o.y, 20, 0, Math.PI * 2); ctx.fill();
                     ctx.fillStyle = '#ff5722';
                     ctx.beginPath(); ctx.moveTo(o.x, o.y - 26); ctx.lineTo(o.x - 8, o.y - 15); ctx.lineTo(o.x + 8, o.y - 15); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(o.x - 26, o.y); ctx.lineTo(o.x - 15, o.y - 8); ctx.lineTo(o.x - 15, o.y + 8); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(o.x + 26, o.y); ctx.lineTo(o.x + 15, o.y - 8); ctx.lineTo(o.x + 15, o.y + 8); ctx.fill();
                 } else {
                     ctx.fillStyle = '#ffffff'; ctx.fillRect(o.x - 6, o.y - 2, 12, 22);
                     ctx.fillStyle = '#7b1fa2'; ctx.beginPath(); ctx.arc(o.x, o.y - 8, 22, Math.PI, 0, false); ctx.fill();
-                    ctx.fillStyle = '#e1bee7';
-                    ctx.beginPath(); ctx.arc(o.x - 7, o.y - 12, 4, 0, Math.PI * 2);
-                    ctx.arc(o.x + 9, o.y - 10, 4, 0, Math.PI * 2); ctx.fill();
                 }
             } else {
-                if (imgAcorn && imgAcorn.complete && imgAcorn.naturalWidth > 0) {
-                    ctx.drawImage(imgAcorn, o.x - 18, o.y - 18, 36, 36);
-                } else {
-                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI * 2); ctx.fill();
-                }
+                // ドングリ（Canvasで描画）
+                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 16, 14, 6, 0, 0, 6.28); ctx.fill();
+                ctx.fillStyle = '#8d5524'; ctx.beginPath(); ctx.arc(o.x, o.y - 4, 12, Math.PI, 0, false); ctx.fill();
+                ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y + 4, 13, 0, Math.PI, false); ctx.fill();
+                ctx.fillStyle = '#ffee55'; ctx.beginPath(); ctx.arc(o.x - 3, o.y + 2, 4, 0, Math.PI * 2); ctx.fill();
             }
             if (o.y > 780) objects.splice(i, 1);
         }
 
-        // --- プレイヤー描画 ---
+        // --- プレイヤー描画（Canvasで可愛いリス風キャラを描画） ---
         var pDrawY = playerY + jumpY;
         ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 38, 10, 0, 0, 6.28); ctx.fill();
 
-        if (imgPlayer && imgPlayer.complete && imgPlayer.naturalWidth > 0) {
-            ctx.drawImage(imgPlayer, playerX - 45, pDrawY - 50, 90, 75);
-        } else {
-            ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 20, 26, 0, Math.PI*2); ctx.fill();
-        }
+        // 体
+        ctx.fillStyle = '#d97706'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 10, 26, 0, Math.PI * 2); ctx.fill();
+        // 耳
+        ctx.beginPath(); ctx.arc(playerX - 16, pDrawY - 32, 9, 0, Math.PI * 2);
+        ctx.arc(playerX + 16, pDrawY - 32, 9, 0, Math.PI * 2); ctx.fill();
+        // 耳の中
+        ctx.fillStyle = '#fde68a';
+        ctx.beginPath(); ctx.arc(playerX - 16, pDrawY - 32, 5, 0, Math.PI * 2);
+        ctx.arc(playerX + 16, pDrawY - 32, 5, 0, Math.PI * 2); ctx.fill();
+        // 顔
+        ctx.fillStyle = '#fef3c7'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 2, 16, 0, Math.PI * 2); ctx.fill();
+        // 目
+        ctx.fillStyle = '#111827';
+        ctx.beginPath(); ctx.arc(playerX - 7, pDrawY - 12, 3.5, 0, Math.PI * 2);
+        ctx.arc(playerX + 7, pDrawY - 12, 3.5, 0, Math.PI * 2); ctx.fill();
+        // 鼻
+        ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 6, 2, 0, Math.PI * 2); ctx.fill();
 
         if (speedUpNotifyTimer > 0) {
             speedUpNotifyTimer--;
-            ctx.fillStyle = 'rgba(255, 215, 0,
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.95)';
+            ctx.font = '900 24px sans-serif';
+            ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
+            ctx.strokeText('⚡ SPEED UP! ⚡', 200, 260); ctx.fillText('⚡ SPEED UP! ⚡', 200, 260);
+        }
+        if (isPlaying) requestAnimationFrame(gameLoop);
+    }
+</script>
+</body>
+</html>
+
