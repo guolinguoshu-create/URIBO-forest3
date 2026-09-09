@@ -101,7 +101,7 @@
 <body>
 
 <div id="game-container">
-    <div id="version-tag">v35 ULTIMATE</div>
+    <div id="version-tag">v36 PRO FIX</div>
 
     <div id="start-screen">
         <button class="massive-btn">ゲームスタート！</button>
@@ -148,7 +148,7 @@
     var score = 0;
     var highScore = 0;
     try {
-        highScore = localStorage.getItem('acorn_highscore_v35') || 0;
+        highScore = localStorage.getItem('acorn_highscore_v36') || 0;
     } catch(e) {}
     D.getElementById('high-score').innerText = highScore;
 
@@ -263,8 +263,35 @@
         btn.className = isBgmOn ? "bgm-btn active" : "bgm-btn";
     }
 
-    var imgPlayer = new Image(); imgPlayer.src = '1788793264451.png';
-    var imgAcorn = new Image(); imgAcorn.src = 'image.png';
+    // 自動背景透過（白抜き）処理を行う関数
+    function makeTransparentImage(src) {
+        var img = new Image();
+        img.src = src;
+        img.onload = function() {
+            try {
+                var c = document.createElement('canvas');
+                var cx = c.getContext('2d');
+                c.width = img.naturalWidth;
+                c.height = img.naturalHeight;
+                cx.drawImage(img, 0, 0);
+                var imgData = cx.getImageData(0, 0, c.width, c.height);
+                var data = imgData.data;
+                for (var i = 0; i < data.length; i += 4) {
+                    var r = data[i], g = data[i+1], b = data[i+2];
+                    // 白または明るいグレーの背景を透明にする
+                    if (r > 210 && g > 210 && b > 210) {
+                        data[i+3] = 0;
+                    }
+                }
+                cx.putImageData(imgData, 0, 0);
+                img.src = c.toDataURL();
+            } catch(e) {}
+        };
+        return img;
+    }
+
+    var imgPlayer = makeTransparentImage('1788793264451.png');
+    var imgAcorn = makeTransparentImage('image.png');
 
     function startGameForce() {
         safeInitAudio();
@@ -315,7 +342,7 @@
 
         if (score > highScore) {
             highScore = score;
-            try { localStorage.setItem('acorn_highscore_v35', highScore); } catch(e) {}
+            try { localStorage.setItem('acorn_highscore_v36', highScore); } catch(e) {}
             D.getElementById('high-score').innerText = highScore;
         }
 
@@ -330,7 +357,6 @@
         setTimeout(function() { playResultFanfare(); }, 150);
     }
 
-    // すべての環境でボタンや画面タッチが確実に機能する登録処理
     function bindAction(id, func) {
         var el = D.getElementById(id);
         if (!el) return;
@@ -382,14 +408,17 @@
             if (speedCounter % 35 === 0) speedUpNotifyTimer = 40;
         }
 
+        // 背景描画
         ctx.fillStyle = '#2d5026'; ctx.fillRect(0, 0, 400, 700);
         ctx.fillStyle = '#9e744a'; ctx.fillRect(50, 0, 300, 700);
         ctx.strokeStyle = '#dca868'; ctx.lineWidth = 4; ctx.strokeRect(50, 0, 300, 700);
 
+        // 道路の中央線
         ctx.strokeStyle = '#ffeb3b'; ctx.lineWidth = 3; ctx.setLineDash([25, 25]); ctx.lineDashOffset = -bgY;
         ctx.beginPath(); ctx.moveTo(150, 0); ctx.lineTo(150, 700); ctx.moveTo(250, 0); ctx.lineTo(250, 700); ctx.stroke();
         ctx.setLineDash([]);
 
+        // オブジェクト（ドングリ・障害物）描画
         for (var i = objects.length - 1; i >= 0; i--) {
             var o = objects[i];
             o.y += speed;
@@ -397,7 +426,7 @@
             var dx = Math.abs(playerX - o.x);
             var dy = Math.abs((playerY + jumpY) - o.y);
             
-            if (dx < 42 && dy < 45) {
+            if (dx < 38 && dy < 40) {
                 if (o.enemy) {
                     if (jumpY > -20) { endGame(); return; }
                 } else {
@@ -410,17 +439,24 @@
             }
 
             if (o.enemy) {
-                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 20, 36, 10, 0, 0, 6.28); ctx.fill();
+                // 障害物のデザイン修正：立体的な木株・岩・罠風にリッチ化
+                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 18, 32, 9, 0, 0, 6.28); ctx.fill();
                 if (o.type === 0) {
-                    ctx.fillStyle = '#78909c'; ctx.beginPath(); ctx.arc(o.x, o.y, 28, 0, Math.PI * 2); ctx.fill();
+                    // 木株風
+                    ctx.fillStyle = '#5c3818'; ctx.beginPath(); ctx.arc(o.x, o.y, 24, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#a06836'; ctx.beginPath(); ctx.arc(o.x, o.y, 16, 0, Math.PI * 2); ctx.fill();
                 } else if (o.type === 1) {
-                    ctx.fillStyle = '#b0bec5'; ctx.fillRect(o.x - 38, o.y - 12, 76, 24);
+                    // 岩風
+                    ctx.fillStyle = '#607d8b'; ctx.beginPath(); ctx.roundRect(o.x - 26, o.y - 18, 52, 36, 12); ctx.fill();
+                    ctx.fillStyle = '#90a4ae'; ctx.beginPath(); ctx.roundRect(o.x - 18, o.y - 12, 36, 24, 8); ctx.fill();
                 } else {
-                    ctx.fillStyle = '#5d4037'; ctx.beginPath(); ctx.arc(o.x, o.y, 26, 0, Math.PI * 2); ctx.fill();
+                    // 茂み・丸太風
+                    ctx.fillStyle = '#33691e'; ctx.beginPath(); ctx.arc(o.x - 10, o.y, 18, 0, Math.PI * 2); ctx.arc(o.x + 10, o.y, 18, 0, Math.PI * 2); ctx.fill();
                 }
             } else {
+                // ドングリのサイズ調整 (36x36) & 透過表示
                 if (imgAcorn && imgAcorn.complete && imgAcorn.naturalWidth > 0) {
-                    ctx.drawImage(imgAcorn, o.x - 22, o.y - 22, 44, 44);
+                    ctx.drawImage(imgAcorn, o.x - 18, o.y - 18, 36, 36);
                 } else {
                     ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(o.x, o.y, 15, 0, Math.PI * 2); ctx.fill();
                 }
@@ -428,20 +464,21 @@
             if (o.y > 780) objects.splice(i, 1);
         }
 
+        // キャラクター（プレイヤー）のサイズ調整 (幅100, 高さ85) & 透過表示
         var pDrawY = playerY + jumpY;
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 58, 48, 12, 0, 0, 6.28); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(playerX, playerY + 45, 42, 10, 0, 0, 6.28); ctx.fill();
 
         if (imgPlayer && imgPlayer.complete && imgPlayer.naturalWidth > 0) {
-            ctx.drawImage(imgPlayer, playerX - 65, pDrawY - 70, 130, 115);
+            ctx.drawImage(imgPlayer, playerX - 50, pDrawY - 55, 100, 85);
         } else {
-            ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 20, 30, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ff8800'; ctx.beginPath(); ctx.arc(playerX, pDrawY - 20, 28, 0, Math.PI*2); ctx.fill();
         }
 
         if (speedUpNotifyTimer > 0) {
             speedUpNotifyTimer--;
             ctx.fillStyle = 'rgba(255, 215, 0, 0.95)';
-            ctx.font = '900 26px sans-serif';
-            ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 5;
+            ctx.font = '900 24px sans-serif';
+            ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 4;
             ctx.strokeText('⚡ SPEED UP! ⚡', 200, 260); ctx.fillText('⚡ SPEED UP! ⚡', 200, 260);
         }
         if (isPlaying) requestAnimationFrame(gameLoop);
